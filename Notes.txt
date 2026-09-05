@@ -1,0 +1,20 @@
+https://share.gemini.google/ySwSRuQgZqo1
+
+UGC is asking to create admission process to be connected through api refer this three documents mentioned below, I want you to build a website for this process, this is very important site so carefully understand the process and build it
+1. DEB Unique ID API Guide - Copy (7) (1).docx
+2. Format of the student admission data.docx
+3. Name of Countries to be asked from students while taking admission.docx
+
+Build a react template to fetch details using DEB ID
+   ↓
+Make use of API to fetch Deb Id from UGC with respective api and URL Endpoint
+   ↓
+Next bring out those data in new admission form dynamically 
+   ↓
+Let admission incharge fill needed details and send back push the admission data through reverse API
+   ↓
+Design database mapping for admission also need to save in our DB
+   ↓
+Our Api is not confirmed yet so keep two modes first for testing in our local to check admission details is saved for that dummy debid locally and admission details saving in DB for online let it work with realtime implementation
+   ↓
+Test complete admission flow

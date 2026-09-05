@@ -1,0 +1,797 @@
+
+DEB Unique ID API Guide
+This document provides a detailed guide on how to use the DEB Unique ID API to retrieve student details.
+Table of Contents
+Introduction
+Overview of the DEB Unique ID API
+Base URL
+API endpoint information
+Authentication
+Details on how to authenticate requests using an authentication token
+Header Parameters
+Request Parameters
+Query Parameters
+Example Request and Response
+Sample API request
+Sample API response
+Response Format
+Structure of the response data
+Error Handling
+Common error responses and their meanings
+Usage Guidelines
+Best practices for using the API
+Reverse Admission Response API Guide
+Introduction
+Base URL
+API endpoint information
+Parameters
+Request Parameters
+Example Request and Response
+Sample API request
+Sample API response
+Error Handling
+Common error responses and their meanings
+Usage Guidelines
+Best practices for using the API
+1. Introduction
+An introduction to the DEB Unique ID API, its purpose, and the type of data it provides.
+2. Base URL
+-308344208989
+
+URL
+
+URLThe endpoint to access the API:
+-311499123853
+
+http://45.124.184.101/deb.ugc.ac.in/api/DebUniqueID/GetStudentDetails
+
+0
+http://45.124.184.101/deb.ugc.ac.in/api/DebUniqueID/GetStudentDetails
+
+
+
+
+
+3. Authentication
+To use the API, you need to pass an authentication token in the header.
+Header Parameter
+APIKey: {Your_Authentication_Token}
+Headers
+Authentication Token: A token required for authentication. This must be passed in the header to validate the request.
+4. Request Parameters
+Query Parameter
+DEB Unique ID: The unique identifier for a student. This parameter is required and must be passed as a query parameter.
+5. Example Request and Response
+HTTP Method
+The API uses the GET method to retrieve information.
+Request Format
+To make a request, you need to send a POST request to the API endpoint with the DEB Unique ID as a query parameter and include the authentication token in the request header.
+205210
+
+POST
+
+0
+POST
+
+
+153600
+
+POST http://45.124.184.101/api/DebUniqueID/GetStudentDetails?DEBUniqueID=your_unique_id
+APIKey: your_auth_token
+
+POST http://45.124.184.101/api/DebUniqueID/GetStudentDetails?DEBUniqueID=your_unique_id
+APIKey: your_auth_token
+
+
+
+
+
+
+
+Replace your_unique_id with the actual DEB Unique ID of the student and your_auth_token with your actual authentication token.
+Response
+The API will return a JSON object containing the student details.
+
+11611
+
+Json
+
+
+
+
+0
+Json
+
+
+
+
+
+9344977439
+
+{
+  "status": "success",
+  "data": {
+    "studentName": "John Doe",
+    "gender": "Male",
+    "dob": "1995-08-15",
+    "universityName": "XYZ University"
+  }
+}
+
+
+
+
+
+
+
+
+
+0
+{
+  "status": "success",
+  "data": {
+    "studentName": "John Doe",
+    "gender": "Male",
+    "dob": "1995-08-15",
+    "universityName": "XYZ University"
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Response Fields
+status: The status of the API request (e.g., "success", "error").
+data: An object containing the student details.
+studentName: The name of the student.
+gender: The gender of the student.
+dob: The date of birth of the student.
+universityName: The name of the university where the student is enrolled.
+6. Error Handling
+In case of an error, the API will return an error message with the status set to "error".
+Example Error Response
+30145151716
+
+json
+
+json
+60290167416
+
+{
+  "status": "error",
+  "message": "Invalid DEB Unique ID"
+}
+0
+{
+  "status": "error",
+  "message": "Invalid DEB Unique ID"
+}
+
+
+
+
+
+Common Error Messages
+Invalid DEB Unique ID: The DEB Unique ID provided is not valid.
+Missing DEB Unique ID: The DEB Unique ID parameter is missing from the request.
+Unauthorized: The authentication token is missing or invalid.
+7. Usage Guidelines
+Example with Curl
+20097141682
+
+curl
+
+curl
+40193137286
+
+curl -X POST "http://45.124.184.101/deb.ugc.ac.in/api/DebUniqueID/GetStudentDetails?DEBUniqueID=123456" -H "Authorization: Bearer your_auth_token"
+
+curl -X POST "http://45.124.184.101/deb.ugc.ac.in/api/DebUniqueID/GetStudentDetails?DEBUniqueID=123456" -H "Authorization: Bearer your_auth_token"
+
+
+
+
+
+
+Example with Asp.net code
+Button Code of fetch Details from Deb Portal
+
+246652
+
+Javascript Code:
+
+Javascript Code:
+
+20097264928
+
+$('#fetchDetailsButton').on('click', function (e) {
+        e.preventDefault();
+        var frmLogin = $('#frm');        
+        var btn = $(this);
+        btn.text('Processing...');
+        btn.addClass('disabled');
+        $.ajax({
+            method: 'POST',
+            url: $('#hdfBaseUrl').val() + 'RegistrationdebId/FetchStudentDetails',
+            data: { PROGRAMCODE: $('#debUniqueId').val() }
+        }).done(function (data) {
+            if (data["List"].length > 0) {
+                $.each(data["List"], function (index, item) {
+                    btn.text('Fetched!!');
+                    document.getElementById('studentDetails').classList.remove('hidden');
+                    document.getElementById('AddharDetails').classList.remove('hidden');
+                    document.getElementById('admissionProcess').classList.remove('hidden');
+                    document.getElementById('Captchadetails').classList.remove('hidden');
+                    document.getElementById('OtherDetails').classList.remove('hidden');
+                    $('#txtName').val(item["stdname"]);
+                    $('#txtMobile').val(item["mobile"]);
+                    $('#txtEmail').val(item["email"]);
+                    $('#drpGender').val(item["gender"]);
+                })
+            }
+        });
+    });
+
+0
+$('#fetchDetailsButton').on('click', function (e) {
+        e.preventDefault();
+        var frmLogin = $('#frm');        
+        var btn = $(this);
+        btn.text('Processing...');
+        btn.addClass('disabled');
+        $.ajax({
+            method: 'POST',
+            url: $('#hdfBaseUrl').val() + 'RegistrationdebId/FetchStudentDetails',
+            data: { PROGRAMCODE: $('#debUniqueId').val() }
+        }).done(function (data) {
+            if (data["List"].length > 0) {
+                $.each(data["List"], function (index, item) {
+                    btn.text('Fetched!!');
+                    document.getElementById('studentDetails').classList.remove('hidden');
+                    document.getElementById('AddharDetails').classList.remove('hidden');
+                    document.getElementById('admissionProcess').classList.remove('hidden');
+                    document.getElementById('Captchadetails').classList.remove('hidden');
+                    document.getElementById('OtherDetails').classList.remove('hidden');
+                    $('#txtName').val(item["stdname"]);
+                    $('#txtMobile').val(item["mobile"]);
+                    $('#txtEmail').val(item["email"]);
+                    $('#drpGender').val(item["gender"]);
+                })
+            }
+        });
+    });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+20097211015
+
+Controller Code:
+
+Controller Code:
+50242180060
+
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Net;
+using System.Text;
+using System.Web;
+using System.Web.Mvc;
+using Newtonsoft.Json;
+using RestSharp;
+ 
+[HttpPost]
+public JsonResult FetchStudentDetails(string PROGRAMCODE = "")
+{
+string URL = "http://45.124.184.101/deb.ugc.ac.in/api/DebUniqueID/GetStudentDetails?PROGRAMCODE=" + PROGRAMCODE;
+
+StudentDetails oSearch1 = new StudentDetails();
+string DataSearch = API_GetStudentDetailsAsync(URL);
+oSearch1 = JsonConvert.DeserializeObject<StudentDetails>(DataSearch);
+if (oSearch1.Status == "Process Success")
+{
+ _list.AddRange(oSearch1.Resource);
+}
+ViewBag.GlobalSearch = _list;
+return Json(new{List = _list}, JsonRequestBehavior.AllowGet);
+}
+
+0
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Net;
+using System.Text;
+using System.Web;
+using System.Web.Mvc;
+using Newtonsoft.Json;
+using RestSharp;
+ 
+[HttpPost]
+public JsonResult FetchStudentDetails(string PROGRAMCODE = "")
+{
+string URL = "http://45.124.184.101/deb.ugc.ac.in/api/DebUniqueID/GetStudentDetails?PROGRAMCODE=" + PROGRAMCODE;
+
+StudentDetails oSearch1 = new StudentDetails();
+string DataSearch = API_GetStudentDetailsAsync(URL);
+oSearch1 = JsonConvert.DeserializeObject<StudentDetails>(DataSearch);
+if (oSearch1.Status == "Process Success")
+{
+ _list.AddRange(oSearch1.Resource);
+}
+ViewBag.GlobalSearch = _list;
+return Json(new{List = _list}, JsonRequestBehavior.AllowGet);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-60290182064
+
+GetStudentDetailsAsync Function in Same Controller 
+
+GetStudentDetailsAsync Function in Same Controller 
+-30145301199
+
+public string API_GetStudentDetailsAsync(string URL = "")
+{
+var client = new RestClient(URL);
+client.Timeout = -1;
+var request = new RestRequest(Method.POST);
+request.AddHeader("APIKey", "Your_Auhorozation_Key");
+IRestResponse response = client.Execute(request);
+return response.Content;
+}
+
+
+public string API_GetStudentDetailsAsync(string URL = "")
+{
+var client = new RestClient(URL);
+client.Timeout = -1;
+var request = new RestRequest(Method.POST);
+request.AddHeader("APIKey", "Your_Auhorozation_Key");
+IRestResponse response = client.Execute(request);
+return response.Content;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+2.0 Reverse Admission Response API Guide
+2.1 Introduction
+This document provides a detailed guide on how to use the Reverse Admission Response API to retrieve admission details.
+2.2 API Endpoint
+The base URL for the API is:
+-6029044457
+
+URL
+0
+URL
+-3014540061
+
+http://45.124.184.101/deb.ugc.ac.in/api/DebUniqueID/GetAdmissionDetails
+
+http://45.124.184.101/deb.ugc.ac.in/api/DebUniqueID/GetAdmissionDetails
+
+
+
+2.3 Parameters
+Request Parameters
+You need to provide the following parameters as part of the request:
+ABCID: The unique identifier for the admission response.
+DEBuniqueID: The unique identifier for the student.
+AdmissionDetails: Detailed information about the admission.
+UniversityName: The name of the university.
+CourseName: The name of the course.
+AdmissionDate: The date of admission.
+2.4 Example Request and Response
+Example Request
+To make a request, you need to send a POST request to the API endpoint with the required parameters.
+-30145309992
+
+URL
+0
+URLExample URL
+
+-2009729803
+
+http://45.124.184.101/deb.ugc.ac.in/api/DebUniqueID/GetAdmissionDetails?ABCID=abc123&DEBuniqueID=deb456&AdmissionDetails=details&UniversityName=XYZUniversity&CourseName=BSc&AdmissionDate=2024-01-01
+
+Header ---APIKey: your_auth_token
+
+0
+http://45.124.184.101/deb.ugc.ac.in/api/DebUniqueID/GetAdmissionDetails?ABCID=abc123&DEBuniqueID=deb456&AdmissionDetails=details&UniversityName=XYZUniversity&CourseName=BSc&AdmissionDate=2024-01-01
+
+Header ---APIKey: your_auth_token
+
+
+
+
+
+
+
+
+Replace the parameter values with actual data.
+HTTP Method
+The API uses the POST method to retrieve information.
+Response
+The API will return a JSON object containing the status of the request.
+-90435262513
+
+json
+0
+jsonExample Response
+
+-6096062865
+
+{
+  "status": "Process Success"
+}
+0
+{
+  "status": "Process Success"
+}
+
+
+
+
+Response Fields
+status: The status of the API request, which will be "Process Success" if the request is processed successfully.
+2.5 Error Handling
+In case of an error, the API will return an error message. Here are some common scenarios:
+Common Error Messages
+Invalid Parameters: One or more parameters are missing or invalid.
+Unauthorized: The request is not authorized.
+2.6 Usage Guidelines
+Example with Curl
+2009710566
+
+Curl
+0
+Curl
+5024255085
+
+curl -X POST "https://deb.ugc.ac.in/api/DebUniqueID/GetAdmissionDetails?ABCID=abc123&DEBuniqueID=deb456&AdmissionDetails=details&UniversityName=XYZUniversity&CourseName=BSc&AdmissionDate=2024-01-01"
+0
+curl -X POST "https://deb.ugc.ac.in/api/DebUniqueID/GetAdmissionDetails?ABCID=abc123&DEBuniqueID=deb456&AdmissionDetails=details&UniversityName=XYZUniversity&CourseName=BSc&AdmissionDate=2024-01-01"
+
+
+
+
+Example with Asp.net code
+Button Code for send Admission Response to DEB
+
+
+
+
+
+
+
+
+
+
+
+
+
+50200132353
+
+Javascript Code
+
+Javascript Code
+
+70338190919
+
+$('#tbody').on('click', '.btnGenerateRegNo', function (e) {
+var $a = $(this).closest("tr");
+var debUniqueId = $a.find("#btnGenerateRegNo").attr('data-val');
+var btn = $(this);
+var btnCaption = btn.text();
+btn.text("Processing...");
+btn.addClass('disabled');
+$.ajax({
+method: 'POST',
+url: $('#hdfBaseUrl').val() + 'api/InstituteResponce/GetAdmissionDetails',
+data: { debUniqueId: debUniqueId }
+}).done(function (data) {
+if (data["Resource"].length > 0) {
+$.each(data["Resource"], function (index, item) {
+btn.text('Submit');
+$.ajax({
+method: 'POST',
+url: $('#hdfBaseUrl').val() + 'Candidate/FetchStudentDetails?ABCID=' + (item["StudentID"]) + "&DEBuniqueID=" + (item["debUniqueId"]) + "&AdmissionDetails=13",
+data: {}
+}).done(function (data) {
+if (data["Resource"].length > 0) {
+if (data["Resource"] == "1"); {
+alert("Submit Data Successfully");
+window.location.href = $("#hdfBaseUrl").val() + "Admin/Candidate/Verified"
+}
+}
+else {
+btn.text('share');
+btn.removeClass('disabled');
+swal('', 'Responce not sent.', 'error');
+}
+}).fail(function (e) {
+btn.text('share');
+btn.removeClass('disabled');
+swal('', 'Somthing went wrong. Please try again.', 'error');
+});
+})
+}
+else {
+btn.text('Login');
+btn.removeClass('disabled');
+swal('', 'Responce not sent.', 'error');
+}
+}).fail(function (e) {
+btn.text('Login');
+btn.removeClass('disabled');
+swal('', 'Somthing went wrong. Please try again.', 'error');
+});
+})
+
+0
+$('#tbody').on('click', '.btnGenerateRegNo', function (e) {
+var $a = $(this).closest("tr");
+var debUniqueId = $a.find("#btnGenerateRegNo").attr('data-val');
+var btn = $(this);
+var btnCaption = btn.text();
+btn.text("Processing...");
+btn.addClass('disabled');
+$.ajax({
+method: 'POST',
+url: $('#hdfBaseUrl').val() + 'api/InstituteResponce/GetAdmissionDetails',
+data: { debUniqueId: debUniqueId }
+}).done(function (data) {
+if (data["Resource"].length > 0) {
+$.each(data["Resource"], function (index, item) {
+btn.text('Submit');
+$.ajax({
+method: 'POST',
+url: $('#hdfBaseUrl').val() + 'Candidate/FetchStudentDetails?ABCID=' + (item["StudentID"]) + "&DEBuniqueID=" + (item["debUniqueId"]) + "&AdmissionDetails=13",
+data: {}
+}).done(function (data) {
+if (data["Resource"].length > 0) {
+if (data["Resource"] == "1"); {
+alert("Submit Data Successfully");
+window.location.href = $("#hdfBaseUrl").val() + "Admin/Candidate/Verified"
+}
+}
+else {
+btn.text('share');
+btn.removeClass('disabled');
+swal('', 'Responce not sent.', 'error');
+}
+}).fail(function (e) {
+btn.text('share');
+btn.removeClass('disabled');
+swal('', 'Somthing went wrong. Please try again.', 'error');
+});
+})
+}
+else {
+btn.text('Login');
+btn.removeClass('disabled');
+swal('', 'Responce not sent.', 'error');
+}
+}).fail(function (e) {
+btn.text('Login');
+btn.removeClass('disabled');
+swal('', 'Somthing went wrong. Please try again.', 'error');
+});
+})
+
+
+
+10048486039
+
+Function in Controller
+
+Function in Controller
+14067781643
+
+[HttpPost]
+public JsonResult FetchStudentDetails(string ABCID = "",string DEBuniqueID ="",string AdmissionDetails ="")
+{
+List<StudentDetails> _list = new List<StudentDetails>();
+//string URL = "http://localhost:12356/api/DebUniqueID/GetStudentDetails?PROGRAMCODE=" + PROGRAMCODE;
+string URL = "http://45.124.184.101/deb.ugc.ac.in/api/DebUniqueID/GetAdmissionDetails?ABCID=" + ABCID + "&DEBuniqueID=" + DEBuniqueID + "&AdmissionDetails=13";
+
+StudentDetails oSearch1 = new StudentDetails();
+string DataSearch = API_GetStudentDetailsAsync(URL);
+//string DataSearch = v;
+string Resource = "";
+oSearch1 = JsonConvert.DeserializeObject<StudentDetails>(DataSearch);
+if (oSearch1.Status == "Process Success")
+{
+
+Resource = "1";
+}
+
+ViewBag.GlobalSearch = _list;
+return Json(new
+{
+Resource = Resource
+
+},
+JsonRequestBehavior.AllowGet
+);
+
+}
+
+public string API_GetStudentDetailsAsync(string URL = "")
+{
+var client = new RestClient(URL);
+client.Timeout = -1;
+var request = new RestRequest(Method.POST);
+request.AddHeader("APIKey", "Q4Gm1AMqSnJGjN33Ecw36jIoHcmlmMd6");
+IRestResponse response = client.Execute(request);
+return response.Content;
+}
+
+0
+[HttpPost]
+public JsonResult FetchStudentDetails(string ABCID = "",string DEBuniqueID ="",string AdmissionDetails ="")
+{
+List<StudentDetails> _list = new List<StudentDetails>();
+//string URL = "http://localhost:12356/api/DebUniqueID/GetStudentDetails?PROGRAMCODE=" + PROGRAMCODE;
+string URL = "http://45.124.184.101/deb.ugc.ac.in/api/DebUniqueID/GetAdmissionDetails?ABCID=" + ABCID + "&DEBuniqueID=" + DEBuniqueID + "&AdmissionDetails=13";
+
+StudentDetails oSearch1 = new StudentDetails();
+string DataSearch = API_GetStudentDetailsAsync(URL);
+//string DataSearch = v;
+string Resource = "";
+oSearch1 = JsonConvert.DeserializeObject<StudentDetails>(DataSearch);
+if (oSearch1.Status == "Process Success")
+{
+
+Resource = "1";
+}
+
+ViewBag.GlobalSearch = _list;
+return Json(new
+{
+Resource = Resource
+
+},
+JsonRequestBehavior.AllowGet
+);
+
+}
+
+public string API_GetStudentDetailsAsync(string URL = "")
+{
+var client = new RestClient(URL);
+client.Timeout = -1;
+var request = new RestRequest(Method.POST);
+request.AddHeader("APIKey", "Q4Gm1AMqSnJGjN33Ecw36jIoHcmlmMd6");
+IRestResponse response = client.Execute(request);
+return response.Content;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+100484-241160
+
+Web.Config Changes
+
+Web.Config Changes120580140677
+
+<system.webServer>
+<httpProtocol>
+<customHeaders>
+<add name="Access-Control-Allow-Origin" value="*" />
+</customHeaders>
+</httpProtocol>
+</system.webServer>
+
+
+<system.webServer>
+<httpProtocol>
+<customHeaders>
+<add name="Access-Control-Allow-Origin" value="*" />
+</customHeaders>
+</httpProtocol>
+</system.webServer>

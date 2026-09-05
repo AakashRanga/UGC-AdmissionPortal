@@ -1,0 +1,19 @@
+
+Format of the student admission data
+DEB id
+Name of the HEI:U-XXXX(6 digits AISHE code of HEI)
+Enrollment Number
+Mode of Education:Open and Distance Learning (ODL)/Online(OL)
+Name of Programme (As per the DEB Recognition List)
+Date of Admission
+Category: SC/ST/OBC/General/PWD/EWS
+Government issued Identifier: AADHAR Card/PAN Card/Voter id Card/Passport
+Government issued identifier number
+Locality:Urban/Rural
+Nationality: Indian/Others
+Country of Residence:
+Note: For Country of Residence, Please refer the attached ‘Name of Country’ list.
+
+String format.
+https://deb.ugc.ac.in/api/DebUniqueID/GetAdmissionDetails?DEBuniqueID=987654321987 &UniversityName=U-XXXX&CourseName=ABC&AdmissionDate=16-08-2024&AdmissionDetails=NA&EnrollmentNumber=123&ModeEducation=Online(OL)&Category=SC&GovernmentIdentifier=Passport&Locality=Rural&Nationality=Indian&GovernmentIdentifierNumber=BEJPJ1111K&CountryResidence=India
+
