@@ -5,6 +5,8 @@ from datetime import datetime
 class StudentFetchRequest(BaseModel):
     DEBUniqueID: str = Field(..., description="DEB Unique ID of student")
     mode: Optional[str] = Field("ONLINE", description="ONLINE or LOCAL")
+    apiKey: Optional[str] = Field(None, description="Optional API key override")
+    clientId: Optional[str] = Field(None, description="Optional Client ID override")
 
 class StudentProfileData(BaseModel):
     deb_unique_id: str
@@ -33,6 +35,8 @@ class AdmissionSubmissionRequest(BaseModel):
     AdmissionDetails: Optional[str] = "13"
     studentName: Optional[str] = ""
     mode: Optional[str] = "ONLINE"
+    apiKey: Optional[str] = Field(None, description="Optional API key override")
+    clientId: Optional[str] = Field(None, description="Optional Client ID override")
 
 class AdmissionRecordResponse(BaseModel):
     id: int

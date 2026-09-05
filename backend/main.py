@@ -151,8 +151,8 @@ async def fetch_student_details(req: StudentFetchRequest, db: Session = Depends(
         raise HTTPException(status_code=400, detail="DEB Unique ID is required.")
 
     mode = req.mode.upper() if req.mode else "LOCAL"
-    api_key = req.apiKey or settings.UGC_FETCH_STUDENT_API_KEY
-    client_id = req.clientId or settings.UGC_FETCH_STUDENT_CLIENT_ID
+    api_key = getattr(req, "apiKey", None) or settings.UGC_FETCH_STUDENT_API_KEY
+    client_id = getattr(req, "clientId", None) or settings.UGC_FETCH_STUDENT_CLIENT_ID
 
     logger.info(f"Fetching student details for DEB ID: {deb_id} in {mode} mode.")
 
@@ -218,8 +218,8 @@ async def fetch_student_details(req: StudentFetchRequest, db: Session = Depends(
 @app.post("/api/deb/submit-admission")
 async def submit_admission(req: AdmissionSubmissionRequest, db: Session = Depends(get_db)):
     mode = req.mode.upper() if req.mode else "LOCAL"
-    api_key = req.apiKey or settings.UGC_SUBMIT_ADMISSION_API_KEY
-    client_id = req.clientId or settings.UGC_SUBMIT_ADMISSION_CLIENT_ID
+    api_key = getattr(req, "apiKey", None) or settings.UGC_SUBMIT_ADMISSION_API_KEY
+    client_id = getattr(req, "clientId", None) or settings.UGC_SUBMIT_ADMISSION_CLIENT_ID
 
     query_params = {
         "DEBuniqueID": req.DEBuniqueID,
