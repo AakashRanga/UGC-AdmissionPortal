@@ -7,6 +7,7 @@ import secrets
 import httpx
 from fastapi import FastAPI, Depends, HTTPException, Query, Header
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from backend.database import get_db, engine, Base, SessionLocal
@@ -30,6 +31,56 @@ logger = logging.getLogger("deb_app")
 
 # Initialize database tables
 Base.metadata.create_all(bind=engine)
+
+def migrate_database_schema():
+    """Ensure all existing table columns in MySQL are expanded to prevent Data too long errors."""
+    alter_queries = [
+        # deb_admissions
+        "ALTER TABLE deb_admissions MODIFY deb_unique_id VARCHAR(255) NOT NULL",
+        "ALTER TABLE deb_admissions MODIFY abc_id VARCHAR(255) DEFAULT NULL",
+        "ALTER TABLE deb_admissions MODIFY student_name VARCHAR(255) DEFAULT NULL",
+        "ALTER TABLE deb_admissions MODIFY hei_code VARCHAR(255) NOT NULL",
+        "ALTER TABLE deb_admissions MODIFY enrollment_no VARCHAR(255) NOT NULL",
+        "ALTER TABLE deb_admissions MODIFY mode_education VARCHAR(255) NOT NULL",
+        "ALTER TABLE deb_admissions MODIFY programme_name VARCHAR(500) NOT NULL",
+        "ALTER TABLE deb_admissions MODIFY admission_date VARCHAR(100) NOT NULL",
+        "ALTER TABLE deb_admissions MODIFY category VARCHAR(100) NOT NULL",
+        "ALTER TABLE deb_admissions MODIFY gov_id_type VARCHAR(100) NOT NULL",
+        "ALTER TABLE deb_admissions MODIFY gov_id_number VARCHAR(255) NOT NULL",
+        "ALTER TABLE deb_admissions MODIFY locality VARCHAR(100) NOT NULL",
+        "ALTER TABLE deb_admissions MODIFY nationality VARCHAR(100) NOT NULL",
+        "ALTER TABLE deb_admissions MODIFY country_residence VARCHAR(255) NOT NULL",
+        "ALTER TABLE deb_admissions MODIFY admission_details VARCHAR(500) DEFAULT '13'",
+        "ALTER TABLE deb_admissions MODIFY sync_status VARCHAR(100) DEFAULT 'LOCAL_ONLY'",
+        "ALTER TABLE deb_admissions MODIFY ugc_response LONGTEXT DEFAULT NULL",
+        "ALTER TABLE deb_admissions MODIFY mode_used VARCHAR(50) DEFAULT 'LOCAL'",
+        
+        # api_logs
+        "ALTER TABLE api_logs MODIFY endpoint VARCHAR(500) NOT NULL",
+        "ALTER TABLE api_logs MODIFY method VARCHAR(50) NOT NULL",
+        "ALTER TABLE api_logs MODIFY request_params LONGTEXT DEFAULT NULL",
+        "ALTER TABLE api_logs MODIFY headers_sent LONGTEXT DEFAULT NULL",
+        "ALTER TABLE api_logs MODIFY response_body LONGTEXT DEFAULT NULL",
+        "ALTER TABLE api_logs MODIFY mode VARCHAR(50) DEFAULT 'LOCAL'",
+
+        # admin_users
+        "ALTER TABLE admin_users MODIFY username VARCHAR(100) NOT NULL",
+        "ALTER TABLE admin_users MODIFY password_hash VARCHAR(500) NOT NULL",
+        "ALTER TABLE admin_users MODIFY full_name VARCHAR(255) DEFAULT 'SIMATS Administrator'",
+        "ALTER TABLE admin_users MODIFY role VARCHAR(50) DEFAULT 'ADMIN'",
+    ]
+    try:
+        with engine.connect() as conn:
+            for q in alter_queries:
+                try:
+                    conn.execute(text(q))
+                    conn.commit()
+                except Exception:
+                    pass
+    except Exception as e:
+        logger.warning(f"Schema migration note: {e}")
+
+migrate_database_schema()
 
 def hash_password(password: str) -> str:
     """Generate salted SHA-256 hash for secure MySQL storage."""
@@ -76,10 +127,26 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Enable CORS for React Vite Frontend
+# Enable CORS for React Vite Frontend, Live Public IP, and Localhost
+origins = [
+    "http://180.235.121.253:8192",
+    "http://180.235.121.253:8191",
+    "http://180.235.121.253",
+    "https://180.235.121.253:8192",
+    "https://180.235.121.253:8191",
+    "https://180.235.121.253",
+    "http://localhost:8192",
+    "http://127.0.0.1:8192",
+    "http://localhost:8191",
+    "http://127.0.0.1:8191",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
+    allow_origin_regex=r"https?://.*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
