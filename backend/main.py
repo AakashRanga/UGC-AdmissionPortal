@@ -170,25 +170,27 @@ def normalize_ugc_student_response(resp_json: dict) -> dict:
     if not isinstance(resp_json, dict):
         return {"status": "error", "message": "Invalid response format received from UGC API."}
 
-    # If UGC returned error format
-    if resp_json.get("status") in ["error", "Process Error", "Error", "404"]:
-        msg = resp_json.get("message") or resp_json.get("Message") or resp_json.get("error") or "Student details not found."
-        return {"status": "error", "message": str(msg)}
+    # Check for failure/refusal status explicitly
+    status_str = str(resp_json.get("status") or resp_json.get("Status") or "").lower()
+    if any(err_word in status_str for err_word in ["error", "refused", "fail", "invalid", "404", "500"]):
+        msg = resp_json.get("message") or resp_json.get("Message") or resp_json.get("error") or resp_json.get("details") or f"UGC Server returned: {resp_json.get('status') or 'Process Refused'}"
+        return {"status": "error", "message": str(msg), "raw_response": resp_json}
 
     # Check for success structure
-    target = resp_json.get("data") or resp_json.get("Resource") or resp_json.get("List") or resp_json
+    target = resp_json.get("data") or resp_json.get("Resource") or resp_json.get("List") or resp_json.get("details") or resp_json
 
     if isinstance(target, list) and len(target) > 0:
         target = target[0]
 
     if isinstance(target, dict):
-        name = target.get("studentName") or target.get("stdname") or target.get("StudentName") or ""
+        name = target.get("studentName") or target.get("stdname") or target.get("StudentName") or target.get("Name") or ""
         gender = target.get("gender") or target.get("Gender") or ""
         dob = target.get("dob") or target.get("DOB") or ""
-        univ = target.get("universityName") or target.get("UniversityName") or settings.DEFAULT_HEI_CODE
         abc_id = target.get("abcId") or target.get("ABCID") or target.get("StudentID") or target.get("studentId") or ""
+        univ = target.get("universityName") or target.get("UniversityName") or settings.DEFAULT_HEI_CODE
 
-        if name or gender or dob or univ:
+        # Must have actual student fields (name, dob, gender, or abc_id)
+        if name or dob or gender or abc_id:
             return {
                 "status": "success",
                 "message": "Student profile fetched successfully from UGC DEB Portal",
@@ -198,11 +200,12 @@ def normalize_ugc_student_response(resp_json: dict) -> dict:
                     "dob": dob,
                     "universityName": univ,
                     "abcId": abc_id
-                }
+                },
+                "raw_response": resp_json
             }
 
-    msg = resp_json.get("message") or "DEB Unique ID not registered or no profile data found on UGC portal."
-    return {"status": "error", "message": msg}
+    msg = resp_json.get("message") or resp_json.get("Message") or "DEB Unique ID not registered or no profile data found on UGC portal."
+    return {"status": "error", "message": str(msg), "raw_response": resp_json}
 
 def log_api_call(db: Session, endpoint: str, method: str, req_params: str, headers: str, status_code: int, response_body: str, mode_used: str):
     """Save API audit log to MySQL database."""
