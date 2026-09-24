@@ -1,4 +1,76 @@
 export const apiService = {
+  // Administrator Authentication
+  async login(username, password) {
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        return { status: "error", message: data.detail || data.message || "Invalid administrator credentials." };
+      }
+      return data;
+    } catch (e) {
+      return { status: "error", message: `Connection error: ${e.message}` };
+    }
+  },
+
+  async verifyAuth(username = "admin") {
+    try {
+      const res = await fetch(`/api/auth/verify?username=${encodeURIComponent(username)}`);
+      if (res.ok) return await res.json();
+    } catch (e) {
+      console.error("Auth verification error:", e);
+    }
+    return { status: "unauthenticated" };
+  },
+
+  async changePassword(username, currentPassword, newPassword) {
+    try {
+      const res = await fetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, currentPassword, newPassword })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        return { status: "error", message: data.detail || data.message || "Password update failed." };
+      }
+      return data;
+    } catch (e) {
+      return { status: "error", message: `Server error: ${e.message}` };
+    }
+  },
+
+  async createAdminUser({ username, password, fullName = "SIMATS Administrator", role = "ADMIN" }) {
+    try {
+      const res = await fetch('/api/auth/create-admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password, fullName, role })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        return { status: "error", message: data.detail || data.message || "Failed to create administrator account." };
+      }
+      return data;
+    } catch (e) {
+      return { status: "error", message: `Server error: ${e.message}` };
+    }
+  },
+
+  async getAdminUsers() {
+    try {
+      const res = await fetch('/api/auth/users');
+      if (res.ok) return await res.json();
+    } catch (e) {
+      console.error("Failed to fetch admin users:", e);
+    }
+    return { status: "error", data: [] };
+  },
+
   // Check backend server health
   async getHealth() {
     try {

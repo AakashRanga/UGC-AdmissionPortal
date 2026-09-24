@@ -2,17 +2,25 @@ import os
 import json
 import logging
 import datetime
+import hashlib
+import secrets
 import httpx
-from fastapi import FastAPI, Depends, HTTPException, Query
+from fastapi import FastAPI, Depends, HTTPException, Query, Header
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
-from backend.database import get_db, engine, Base
-from backend.models import AdmissionRecord, ApiLog
+from backend.database import get_db, engine, Base, SessionLocal
+from backend.models import AdmissionRecord, ApiLog, AdminUser
 from backend.schemas import (
     StudentFetchRequest,
     AdmissionSubmissionRequest,
-    AdmissionRecordResponse
+    AdmissionRecordResponse,
+    LoginRequest,
+    LoginResponse,
+    UserInfo,
+    ChangePasswordRequest,
+    CreateAdminRequest,
+    CreateAdminResponse
 )
 from backend.config import settings
 
@@ -23,9 +31,48 @@ logger = logging.getLogger("deb_app")
 # Initialize database tables
 Base.metadata.create_all(bind=engine)
 
+def hash_password(password: str) -> str:
+    """Generate salted SHA-256 hash for secure MySQL storage."""
+    salt = secrets.token_hex(16)
+    hashed = hashlib.sha256(f"{salt}:{password}".encode("utf-8")).hexdigest()
+    return f"{salt}:{hashed}"
+
+def verify_password(stored_hash: str, provided_password: str) -> bool:
+    """Verify password against salted SHA-256 hash."""
+    try:
+        if not stored_hash or ":" not in stored_hash:
+            return False
+        salt, hashed = stored_hash.split(":", 1)
+        test_hash = hashlib.sha256(f"{salt}:{provided_password}".encode("utf-8")).hexdigest()
+        return secrets.compare_digest(hashed, test_hash)
+    except Exception:
+        return False
+
+# Ensure default admin account exists in MySQL
+def init_default_admin():
+    db = SessionLocal()
+    try:
+        admin = db.query(AdminUser).filter(AdminUser.username == "admin").first()
+        if not admin:
+            default_admin = AdminUser(
+                username="admin",
+                password_hash=hash_password("admin123"),
+                full_name="SIMATS Administrator",
+                role="ADMIN"
+            )
+            db.add(default_admin)
+            db.commit()
+            logger.info("Created default administrator account in MySQL: username 'admin', password 'admin123'")
+    except Exception as e:
+        logger.error(f"Error initializing default admin user: {e}")
+    finally:
+        db.close()
+
+init_default_admin()
+
 app = FastAPI(
-    title="UGC DEB Student Admission System",
-    description="Official UGC DEB API integration backend for HEI Admission Process.",
+    title="Saveetha Institute of Medical and Technical Sciences (SIMATS) - UGC DEB Admission System",
+    description="Official UGC DEB API integration backend for SIMATS (Deemed to be University) Admission Process.",
     version="1.0.0"
 )
 
@@ -97,10 +144,10 @@ def log_api_call(db: Session, endpoint: str, method: str, req_params: str, heade
             endpoint=endpoint,
             method=method,
             request_params=req_params[:1000] if req_params else None,
-            request_headers=headers[:500] if headers else None,
-            response_code=status_code,
+            headers_sent=headers[:500] if headers else None,
+            response_status=status_code,
             response_body=response_body[:2000] if response_body else None,
-            mode_used=mode_used
+            mode=mode_used
         )
         db.add(log_entry)
         db.commit()
@@ -115,6 +162,131 @@ def health_check():
         "timestamp": datetime.datetime.utcnow().isoformat(),
         "database": "MySQL WorkBench",
         "default_hei": settings.DEFAULT_HEI_CODE
+    }
+
+# ================= AUTHENTICATION ROUTES (Admin Only) =================
+
+@app.post("/api/auth/login", response_model=LoginResponse)
+def admin_login(req: LoginRequest, db: Session = Depends(get_db)):
+    """Authenticate administrator using MySQL stored credentials."""
+    username = req.username.strip()
+    password = req.password.strip()
+
+    if not username or not password:
+        raise HTTPException(status_code=400, detail="Username and password are required.")
+
+    admin = db.query(AdminUser).filter(AdminUser.username == username).first()
+    if not admin or not verify_password(admin.password_hash, password):
+        raise HTTPException(status_code=401, detail="Invalid administrator username or password.")
+
+    # Update last login timestamp
+    admin.last_login = datetime.datetime.utcnow()
+    db.commit()
+
+    # Generate secure session token
+    session_token = secrets.token_urlsafe(32)
+
+    return {
+        "status": "success",
+        "message": "Administrator authenticated successfully.",
+        "token": session_token,
+        "user": {
+            "id": admin.id,
+            "username": admin.username,
+            "fullName": admin.full_name or "SIMATS Administrator",
+            "role": admin.role or "ADMIN"
+        }
+    }
+
+@app.get("/api/auth/verify")
+def verify_session(username: str = Query("admin"), db: Session = Depends(get_db)):
+    """Verify administrator session status."""
+    admin = db.query(AdminUser).filter(AdminUser.username == username).first()
+    if not admin:
+        raise HTTPException(status_code=404, detail="Administrator account not found.")
+    return {
+        "status": "authenticated",
+        "user": {
+            "id": admin.id,
+            "username": admin.username,
+            "fullName": admin.full_name,
+            "role": admin.role
+        }
+    }
+
+@app.post("/api/auth/change-password")
+def change_admin_password(req: ChangePasswordRequest, db: Session = Depends(get_db)):
+    """Allow administrator to update password stored in MySQL."""
+    admin = db.query(AdminUser).filter(AdminUser.username == req.username).first()
+    if not admin or not verify_password(admin.password_hash, req.currentPassword):
+        raise HTTPException(status_code=401, detail="Current password is incorrect.")
+    
+    if len(req.newPassword) < 6:
+        raise HTTPException(status_code=400, detail="New password must be at least 6 characters.")
+    
+    admin.password_hash = hash_password(req.newPassword)
+    db.commit()
+    return {"status": "success", "message": "Administrator password updated successfully in MySQL database."}
+
+@app.post("/api/auth/create-admin", response_model=CreateAdminResponse)
+def create_admin_user(req: CreateAdminRequest, db: Session = Depends(get_db)):
+    """Create a new administrator account with username and password stored in MySQL."""
+    username = req.username.strip()
+    password = req.password.strip()
+
+    if len(username) < 3:
+        raise HTTPException(status_code=400, detail="Username must be at least 3 characters.")
+    
+    if len(password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters.")
+
+    # Check if username already exists in MySQL
+    existing_user = db.query(AdminUser).filter(AdminUser.username == username).first()
+    if existing_user:
+        raise HTTPException(status_code=400, detail=f"Administrator username '{username}' already exists in MySQL.")
+
+    # Hash password with salted SHA-256
+    new_admin = AdminUser(
+        username=username,
+        password_hash=hash_password(password),
+        full_name=req.fullName or "SIMATS Administrator",
+        role=req.role or "ADMIN"
+    )
+    db.add(new_admin)
+    db.commit()
+    db.refresh(new_admin)
+
+    logger.info(f"Successfully created new administrator account: {username}")
+
+    return {
+        "status": "success",
+        "message": f"Administrator account '{username}' created successfully in MySQL database.",
+        "user": {
+            "id": new_admin.id,
+            "username": new_admin.username,
+            "fullName": new_admin.full_name,
+            "role": new_admin.role
+        }
+    }
+
+@app.get("/api/auth/users")
+def list_admin_users(db: Session = Depends(get_db)):
+    """List registered administrator accounts (excluding password hashes)."""
+    users = db.query(AdminUser).all()
+    return {
+        "status": "success",
+        "count": len(users),
+        "data": [
+            {
+                "id": u.id,
+                "username": u.username,
+                "fullName": u.full_name,
+                "role": u.role,
+                "createdAt": u.created_at.isoformat() if u.created_at else None,
+                "lastLogin": u.last_login.isoformat() if u.last_login else None
+            }
+            for u in users
+        ]
     }
 
 # (Existing student fetch & submit admission routes remain unchanged)
@@ -141,7 +313,7 @@ def delete_admission(admission_id: int, db: Session = Depends(get_db)):
 @app.get("/api/deb/logs")
 def get_api_logs(limit: int = 50, db: Session = Depends(get_db)):
     """Retrieve API audit logs from MySQL database."""
-    logs = db.query(ApiLog).order_by(ApiLog.created_at.desc()).limit(limit).all()
+    logs = db.query(ApiLog).order_by(ApiLog.timestamp.desc()).limit(limit).all()
     return {"status": "success", "count": len(logs), "data": logs}
 
 @app.post("/api/deb/fetch-student")
@@ -311,7 +483,7 @@ async def submit_admission(req: AdmissionSubmissionRequest, db: Session = Depend
             nationality=req.Nationality,
             country_residence=req.CountryResidence,
             sync_status=ugc_status,
-            raw_response=raw_ugc_resp,
+            ugc_response=raw_ugc_resp,
             mode_used=mode
         )
         db.add(adm_record)

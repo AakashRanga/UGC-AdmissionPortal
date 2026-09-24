@@ -4,10 +4,21 @@ import { DebSearchStep } from './components/DebSearchStep';
 import { StudentProfileCard } from './components/StudentProfileCard';
 import { AdmissionFormStep } from './components/AdmissionFormStep';
 import { DatabaseViewer } from './components/DatabaseViewer';
+import { LoginPage } from './components/LoginPage';
 import { apiService } from './services/apiService';
 import { CheckCircle2, AlertTriangle, Database, RotateCcw, X, Info } from 'lucide-react';
 
 export default function App() {
+  // Authentication State
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const stored = localStorage.getItem('deb_admin_user') || sessionStorage.getItem('deb_admin_user');
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
+
   // Navigation tab: 'flow' (Admission Process) or 'database' (Admissions Database)
   const [activeTab, setActiveTab] = useState('flow');
 
@@ -86,13 +97,69 @@ export default function App() {
     }
   };
 
+  const [formData, setFormData] = useState({
+    DEBuniqueID: '',
+    ABCID: '',
+    studentName: '',
+    UniversityName: 'Saveetha Institute of Medical and Technical Sciences',
+    EnrollmentNumber: '',
+    ModeEducation: 'Online(OL)',
+    CourseName: 'Bachelor of Computer Applications(BCA)',
+    AdmissionDate: new Date().toISOString().split('T')[0],
+    Category: 'General',
+    GovernmentIdentifier: 'AADHAR Card',
+    GovernmentIdentifierNumber: '',
+    Locality: 'Urban',
+    Nationality: 'Indian',
+    CountryResidence: 'India',
+    AdmissionDetails: '13'
+  });
+
   const resetFlow = () => {
     setDebId('');
     setStudentProfile(null);
     setLastSubmission(null);
     setErrorMessage(null);
+    setFormData({
+      DEBuniqueID: '',
+      ABCID: '',
+      studentName: '',
+      UniversityName: 'Saveetha Institute of Medical and Technical Sciences',
+      EnrollmentNumber: '',
+      ModeEducation: 'Online(OL)',
+      CourseName: 'Bachelor of Computer Applications(BCA)',
+      AdmissionDate: new Date().toISOString().split('T')[0],
+      Category: 'General',
+      GovernmentIdentifier: 'AADHAR Card',
+      GovernmentIdentifierNumber: '',
+      Locality: 'Urban',
+      Nationality: 'Indian',
+      CountryResidence: 'India',
+      AdmissionDetails: '13'
+    });
     setFlowStage('search');
   };
+
+  const handleLogout = () => {
+    localStorage.removeItem('deb_admin_user');
+    localStorage.removeItem('deb_admin_token');
+    sessionStorage.removeItem('deb_admin_user');
+    sessionStorage.removeItem('deb_admin_token');
+    setCurrentUser(null);
+    showToast('Administrator session ended. Please login again to continue.', 'info');
+  };
+
+  // If administrator is not logged in, render LoginPage
+  if (!currentUser) {
+    return (
+      <LoginPage
+        onLoginSuccess={(user) => {
+          setCurrentUser(user);
+          showToast(`Welcome back, ${user.fullName || user.username}! Administrator access granted.`, 'success');
+        }}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 font-sans">
@@ -135,6 +202,8 @@ export default function App() {
         setActiveTab={setActiveTab}
         mode={mode}
         setMode={setMode}
+        currentUser={currentUser}
+        onLogout={handleLogout}
       />
 
       {/* Content Body */}
@@ -161,27 +230,112 @@ export default function App() {
         {/* TAB 1: ADMISSION PROCESS FLOW (Sequential Step-by-Step Display) */}
         {activeTab === 'flow' && (
           <div className="space-y-6">
-            {/* Step Progress Bar */}
-            <div className="max-w-2xl mx-auto flex items-center justify-between text-xs font-semibold mb-6">
-              <div className={`flex items-center gap-2 ${flowStage === 'search' ? 'text-indigo-400 font-bold' : 'text-slate-500'}`}>
-                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${flowStage === 'search' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400'}`}>1</span>
+            {/* Interactive Step Progress Bar (Click any stage to navigate back/forward) */}
+            <div className="max-w-3xl mx-auto bg-slate-900/80 p-2 rounded-2xl border border-slate-800 flex flex-wrap items-center justify-between gap-2 shadow-xl mb-6">
+              {/* Step 1 */}
+              <button
+                type="button"
+                onClick={() => setFlowStage('search')}
+                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                  flowStage === 'search'
+                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                }`}
+              >
+                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${
+                  flowStage === 'search' ? 'bg-white text-indigo-600 font-bold' : 'bg-slate-800 text-slate-400'
+                }`}>
+                  1
+                </span>
                 <span>DEB Lookup</span>
-              </div>
-              <span className="text-slate-700 font-mono">→</span>
-              <div className={`flex items-center gap-2 ${flowStage === 'profile' ? 'text-indigo-400 font-bold' : 'text-slate-500'}`}>
-                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${flowStage === 'profile' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400'}`}>2</span>
+              </button>
+
+              <span className="text-slate-600 hidden sm:inline">&rarr;</span>
+
+              {/* Step 2 */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (studentProfile) setFlowStage('profile');
+                  else showToast('Please fetch a DEB Unique ID first in Stage 1.', 'error');
+                }}
+                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                  flowStage === 'profile'
+                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
+                    : studentProfile
+                    ? 'text-indigo-300 hover:text-white hover:bg-slate-800'
+                    : 'text-slate-600 hover:text-slate-400'
+                }`}
+              >
+                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${
+                  flowStage === 'profile'
+                    ? 'bg-white text-indigo-600 font-bold'
+                    : studentProfile
+                    ? 'bg-indigo-500/30 text-indigo-300'
+                    : 'bg-slate-800 text-slate-600'
+                }`}>
+                  2
+                </span>
                 <span>Profile Review</span>
-              </div>
-              <span className="text-slate-700 font-mono">→</span>
-              <div className={`flex items-center gap-2 ${flowStage === 'form' ? 'text-indigo-400 font-bold' : 'text-slate-500'}`}>
-                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${flowStage === 'form' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400'}`}>3</span>
+              </button>
+
+              <span className="text-slate-600 hidden sm:inline">&rarr;</span>
+
+              {/* Step 3 */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (studentProfile || debId) setFlowStage('form');
+                  else showToast('Please enter/fetch student details first.', 'error');
+                }}
+                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                  flowStage === 'form'
+                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
+                    : (studentProfile || debId)
+                    ? 'text-indigo-300 hover:text-white hover:bg-slate-800'
+                    : 'text-slate-600 hover:text-slate-400'
+                }`}
+              >
+                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${
+                  flowStage === 'form'
+                    ? 'bg-white text-indigo-600 font-bold'
+                    : (studentProfile || debId)
+                    ? 'bg-indigo-500/30 text-indigo-300'
+                    : 'bg-slate-800 text-slate-600'
+                }`}>
+                  3
+                </span>
                 <span>Admission Form</span>
-              </div>
-              <span className="text-slate-700 font-mono">→</span>
-              <div className={`flex items-center gap-2 ${flowStage === 'success' ? 'text-emerald-400 font-bold' : 'text-slate-500'}`}>
-                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${flowStage === 'success' ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-400'}`}>4</span>
+              </button>
+
+              <span className="text-slate-600 hidden sm:inline">&rarr;</span>
+
+              {/* Step 4 */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (lastSubmission) setFlowStage('success');
+                  else showToast('No submission completed yet. Fill Stage 3 to submit.', 'error');
+                }}
+                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                  flowStage === 'success'
+                    ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/30'
+                    : lastSubmission
+                    ? 'text-emerald-300 hover:text-white hover:bg-slate-800'
+                    : 'text-slate-600 hover:text-slate-400'
+                }`}
+              >
+                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${
+                  flowStage === 'success'
+                    ? 'bg-white text-emerald-600 font-bold'
+                    : lastSubmission
+                    ? 'bg-emerald-500/30 text-emerald-300'
+                    : 'bg-slate-800 text-slate-600'
+                }`}>
+                  4
+                </span>
                 <span>Complete</span>
-              </div>
+              </button>
             </div>
 
             {/* Stage 1: Search */}
@@ -201,6 +355,7 @@ export default function App() {
                 studentData={studentProfile}
                 latency={latency}
                 onProceed={() => setFlowStage('form')}
+                onBack={() => setFlowStage('search')}
               />
             )}
 
@@ -212,7 +367,10 @@ export default function App() {
                 onSubmit={handleSubmitAdmission}
                 submitting={loadingSubmit}
                 mode={mode}
-                onBack={() => setFlowStage('profile')}
+                formData={formData}
+                setFormData={setFormData}
+                onBackToProfile={() => setFlowStage(studentProfile ? 'profile' : 'search')}
+                onBackToSearch={() => setFlowStage('search')}
               />
             )}
 
@@ -228,14 +386,29 @@ export default function App() {
                     Admission Submitted & Saved!
                   </h3>
                   <p className="text-xs text-slate-300 mt-1">
-                    Student admission record <strong className="text-indigo-300">#{lastSubmission.db_record_id}</strong> has been stored and pushed to UGC API.
+                    Student admission record <strong className="text-indigo-300">#{lastSubmission.admission_id || lastSubmission.db_record_id}</strong> has been stored in MySQL and pushed to UGC API.
                   </p>
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+                {/* Multi-action Back & Next Buttons */}
+                <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                  <button
+                    onClick={() => setFlowStage('form')}
+                    className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 hover:text-white flex items-center justify-center gap-2 border border-slate-700 cursor-pointer transition-all"
+                  >
+                    <span>&larr; Back to Stage 3 (Form)</span>
+                  </button>
+
+                  <button
+                    onClick={() => setFlowStage('profile')}
+                    className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 hover:text-white flex items-center justify-center gap-2 border border-slate-700 cursor-pointer transition-all"
+                  >
+                    <span>&larr; Back to Stage 2 (Profile)</span>
+                  </button>
+
                   <button
                     onClick={() => setActiveTab('database')}
-                    className="w-full sm:w-auto px-6 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-white flex items-center justify-center gap-2 border border-slate-700"
+                    className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-indigo-300 hover:text-white flex items-center justify-center gap-2 border border-slate-700 cursor-pointer transition-all"
                   >
                     <Database className="w-4 h-4 text-indigo-400" />
                     <span>View Admissions Database</span>
@@ -243,7 +416,7 @@ export default function App() {
 
                   <button
                     onClick={resetFlow}
-                    className="w-full sm:w-auto gradient-btn px-6 py-3 rounded-xl text-xs font-bold text-white flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/30"
+                    className="gradient-btn px-6 py-2.5 rounded-xl text-xs font-bold text-white flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/30 cursor-pointer"
                   >
                     <RotateCcw className="w-4 h-4" />
                     <span>Process Next Admission</span>
@@ -267,18 +440,6 @@ export default function App() {
           />
         )}
       </main>
-
-      {/* Clean Footer */}
-      <footer className="border-t border-slate-900 bg-slate-950/80 py-6 text-center text-xs text-slate-500">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div>
-            UGC Distance Education Bureau (DEB) Student Admission Portal &copy; {new Date().getFullYear()}
-          </div>
-          <div>
-            Higher Educational Institutions Integration
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

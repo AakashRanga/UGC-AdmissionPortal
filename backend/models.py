@@ -39,3 +39,14 @@ class ApiLog(Base):
     response_body = Column(Text, nullable=True)
     mode = Column(String(20), default="LOCAL")
     timestamp = Column(DateTime, default=datetime.datetime.utcnow)
+
+class AdminUser(Base):
+    __tablename__ = "admin_users"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    username = Column(String(50), unique=True, index=True, nullable=False)
+    password_hash = Column(String(255), nullable=False)
+    full_name = Column(String(100), default="SIMATS Administrator")
+    role = Column(String(20), default="ADMIN")
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    last_login = Column(DateTime, nullable=True)

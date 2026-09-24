@@ -1,7 +1,7 @@
 import React from 'react';
-import { User, Calendar, ShieldCheck, Clock, CheckCircle, ArrowRight } from 'lucide-react';
+import { User, Calendar, ShieldCheck, Clock, CheckCircle, ArrowRight, ArrowLeft } from 'lucide-react';
 
-export function StudentProfileCard({ studentData, latency, onProceed }) {
+export function StudentProfileCard({ studentData, latency, onProceed, onBack }) {
   if (!studentData) return null;
 
   return (
@@ -72,13 +72,23 @@ export function StudentProfileCard({ studentData, latency, onProceed }) {
         </div>
       </div>
 
-      {/* Action Button */}
-      <div className="mt-6 pt-5 border-t border-slate-800 flex justify-end">
+      {/* Action Buttons: Back to Stage 1 & Proceed to Stage 3 */}
+      <div className="mt-6 pt-5 border-t border-slate-800 flex items-center justify-between gap-3">
         <button
-          onClick={onProceed}
-          className="gradient-btn px-6 py-3 rounded-xl font-semibold text-sm text-white flex items-center gap-2 cursor-pointer shadow-lg shadow-indigo-500/30"
+          type="button"
+          onClick={onBack}
+          className="px-4 py-2.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center gap-2 cursor-pointer transition-all border border-slate-700"
         >
-          <span>Fill HEI Admission Form</span>
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>Back to Stage 1 (DEB Search)</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={onProceed}
+          className="gradient-btn px-6 py-2.5 rounded-xl font-semibold text-xs sm:text-sm text-white flex items-center gap-2 cursor-pointer shadow-lg shadow-indigo-500/30"
+        >
+          <span>Proceed to Stage 3 (Admission Form)</span>
           <ArrowRight className="w-4 h-4" />
         </button>
       </div>

@@ -42,3 +42,15 @@ CREATE TABLE IF NOT EXISTS `api_logs` (
     `mode` VARCHAR(20) DEFAULT 'LOCAL',
     `timestamp` DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 3. Admin Authentication Table
+CREATE TABLE IF NOT EXISTS `admin_users` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `username` VARCHAR(50) NOT NULL UNIQUE,
+    `password_hash` VARCHAR(255) NOT NULL,
+    `full_name` VARCHAR(100) DEFAULT 'SIMATS Administrator',
+    `role` VARCHAR(20) DEFAULT 'ADMIN',
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `last_login` DATETIME DEFAULT NULL,
+    INDEX `idx_username` (`username`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

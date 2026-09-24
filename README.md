@@ -108,10 +108,123 @@ A production-ready web application built for Higher Educational Institutions (HE
 The system automatically initializes the MySQL database `ugc_deb_admission` with the following tables:
 
 1. **`deb_admissions`**:
-   - `id`, `deb_unique_id`, `abc_id`, `student_name`, `hei_code`, `enrollment_no`, `mode_education`, `programme_name`, `admission_date`, `category`, `gov_id_type`, `gov_id_number`, `locality`, `nationality`, `country_residence`, `sync_status`, `raw_response`, `mode_used`, `created_at`
+   - `id`, `deb_unique_id`, `abc_id`, `student_name`, `hei_code`, `enrollment_no`, `mode_education`, `programme_name`, `admission_date`, `category`, `gov_id_type`, `gov_id_number`, `locality`, `nationality`, `country_residence`, `sync_status`, `ugc_response`, `mode_used`, `created_at`, `updated_at`
 
 2. **`api_logs`**:
-   - `id`, `endpoint`, `method`, `request_params`, `request_headers`, `response_code`, `response_body`, `mode_used`, `created_at`
+   - `id`, `endpoint`, `method`, `request_params`, `headers_sent`, `response_status`, `response_body`, `mode`, `timestamp`
+
+3. **`admin_users`**:
+   - `id`, `username`, `password_hash`, `full_name`, `role`, `created_at`, `last_login`
+   - Default Administrator Credentials:
+     - **Username**: `admin`
+     - **Password**: `admin123` (Stored as salted SHA-256 hash in MySQL)
+
+---
+
+## 🔐 Administrator Authentication & Management APIs
+
+The portal includes dedicated endpoints to manage administrator accounts stored in MySQL:
+
+### 1. Create New Administrator Account
+Create a new admin user with credentials hashed and saved into MySQL.
+
+- **Endpoint**: `POST /api/auth/create-admin`
+- **Headers**: `Content-Type: application/json`
+- **Request Body**:
+  ```json
+  {
+    "username": "new_admin",
+    "password": "SecurePassword123!",
+    "fullName": "SIMATS Officer",
+    "role": "ADMIN"
+  }
+  ```
+- **Response (200 OK)**:
+  ```json
+  {
+    "status": "success",
+    "message": "Administrator account 'new_admin' created successfully in MySQL database.",
+    "user": {
+      "id": 2,
+      "username": "new_admin",
+      "fullName": "SIMATS Officer",
+      "role": "ADMIN"
+    }
+  }
+  ```
+- **cURL Example**:
+  ```bash
+  curl -X POST "http://localhost:8000/api/auth/create-admin" \
+       -H "Content-Type: application/json" \
+       -d '{"username": "simats_admin", "password": "AdminPassword2025", "fullName": "Saveetha Admissions Incharge", "role": "ADMIN"}'
+  ```
+
+---
+
+### 2. Administrator Login
+Authenticate an administrator against MySQL.
+
+- **Endpoint**: `POST /api/auth/login`
+- **Request Body**:
+  ```json
+  {
+    "username": "admin",
+    "password": "admin123"
+  }
+  ```
+- **Response (200 OK)**:
+  ```json
+  {
+    "status": "success",
+    "message": "Administrator authenticated successfully.",
+    "token": "wL9j1_...",
+    "user": {
+      "id": 1,
+      "username": "admin",
+      "fullName": "SIMATS Administrator",
+      "role": "ADMIN"
+    }
+  }
+  ```
+
+---
+
+### 3. List Registered Administrators
+Retrieve list of registered administrator accounts (passwords are safely omitted).
+
+- **Endpoint**: `GET /api/auth/users`
+- **Response (200 OK)**:
+  ```json
+  {
+    "status": "success",
+    "count": 1,
+    "data": [
+      {
+        "id": 1,
+        "username": "admin",
+        "fullName": "SIMATS Administrator",
+        "role": "ADMIN",
+        "createdAt": "2026-09-24T14:26:00",
+        "lastLogin": "2026-09-24T14:30:00"
+      }
+    ]
+  }
+  ```
+
+---
+
+### 4. Update Administrator Password
+Update an admin account's password in MySQL.
+
+- **Endpoint**: `POST /api/auth/change-password`
+- **Request Body**:
+  ```json
+  {
+    "username": "admin",
+    "currentPassword": "admin123",
+    "newPassword": "NewStrongPassword2025"
+  }
+  ```
 
 ---
 

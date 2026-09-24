@@ -61,3 +61,35 @@ class AdmissionRecordResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class LoginRequest(BaseModel):
+    username: str = Field(..., description="Administrator username")
+    password: str = Field(..., description="Administrator password")
+
+class UserInfo(BaseModel):
+    id: int
+    username: str
+    fullName: str
+    role: str
+
+class LoginResponse(BaseModel):
+    status: str
+    message: str
+    token: str
+    user: UserInfo
+
+class ChangePasswordRequest(BaseModel):
+    username: str
+    currentPassword: str
+    newPassword: str
+
+class CreateAdminRequest(BaseModel):
+    username: str = Field(..., min_length=3, max_length=50, description="Unique admin username")
+    password: str = Field(..., min_length=6, description="Password (minimum 6 characters)")
+    fullName: Optional[str] = Field("SIMATS Administrator", description="Full display name")
+    role: Optional[str] = Field("ADMIN", description="Role: ADMIN or OPERATOR")
+
+class CreateAdminResponse(BaseModel):
+    status: str
+    message: str
+    user: UserInfo

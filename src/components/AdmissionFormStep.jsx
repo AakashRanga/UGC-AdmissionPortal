@@ -3,12 +3,22 @@ import { Send, FileText, Globe, Building2, Shield, Search, Loader2, ArrowLeft, U
 import countries from '../data/countries.json';
 import { DEB_RECOGNIZED_COURSES } from '../data/mockDebData';
 
-export function AdmissionFormStep({ debId, studentData, onSubmit, submitting, mode, onBack }) {
-  const [formData, setFormData] = useState({
+export function AdmissionFormStep({
+  debId,
+  studentData,
+  onSubmit,
+  submitting,
+  mode,
+  onBackToProfile,
+  onBackToSearch,
+  formData: externalFormData,
+  setFormData: setExternalFormData
+}) {
+  const [internalFormData, setInternalFormData] = useState({
     DEBuniqueID: debId || '',
     ABCID: '',
     studentName: (studentData && (studentData.studentName || studentData.stdname || studentData.StudentName)) || '',
-    UniversityName: (studentData && (studentData.universityName || studentData.UniversityName)) || '',
+    UniversityName: (studentData && (studentData.universityName || studentData.UniversityName)) || 'Saveetha Institute of Medical and Technical Sciences',
     EnrollmentNumber: '',
     ModeEducation: 'Online(OL)',
     CourseName: DEB_RECOGNIZED_COURSES[0],
@@ -22,7 +32,10 @@ export function AdmissionFormStep({ debId, studentData, onSubmit, submitting, mo
     AdmissionDetails: '13'
   });
 
-  const [countryQuery, setCountryQuery] = useState('India');
+  const formData = externalFormData || internalFormData;
+  const setFormData = setExternalFormData || setInternalFormData;
+
+  const [countryQuery, setCountryQuery] = useState(formData.CountryResidence || 'India');
   const [isCountryOpen, setIsCountryOpen] = useState(false);
 
   useEffect(() => {
@@ -52,7 +65,7 @@ export function AdmissionFormStep({ debId, studentData, onSubmit, submitting, mo
   return (
     <div className="glass-panel rounded-2xl p-6 lg:p-8 border border-indigo-500/30 relative shadow-2xl max-w-4xl mx-auto animate-fade-in space-y-6">
       {/* Top Bar Header */}
-      <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-800">
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/30 text-xs font-semibold uppercase tracking-wider mb-1">
             Step 3: New Student Admission Entry
@@ -62,14 +75,28 @@ export function AdmissionFormStep({ debId, studentData, onSubmit, submitting, mo
           </h2>
         </div>
 
-        <button
-          type="button"
-          onClick={onBack}
-          className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center gap-1.5 cursor-pointer"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          Back to Search
-        </button>
+        <div className="flex items-center gap-2">
+          {onBackToSearch && (
+            <button
+              type="button"
+              onClick={onBackToSearch}
+              className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white flex items-center gap-1.5 cursor-pointer border border-slate-800 transition-all"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Stage 1 (Search)</span>
+            </button>
+          )}
+          {onBackToProfile && (
+            <button
+              type="button"
+              onClick={onBackToProfile}
+              className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-indigo-950/60 hover:bg-indigo-900 text-indigo-300 hover:text-white flex items-center gap-1.5 cursor-pointer border border-indigo-500/40 transition-all"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Stage 2 (Profile)</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* UGC Fetched Credentials Summary Banner (Exact 4 fields from Section 5 DOCX) */}
@@ -421,8 +448,20 @@ export function AdmissionFormStep({ debId, studentData, onSubmit, submitting, mo
 
         {/* Submit Action Bar */}
         <div className="pt-6 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="text-xs text-slate-400">
-            Mode: <strong className="text-indigo-300">{mode === 'LOCAL' ? 'Local Test Mode' : 'Realtime Online Mode'}</strong>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            {onBackToProfile && (
+              <button
+                type="button"
+                onClick={onBackToProfile}
+                className="w-full sm:w-auto px-5 py-3 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center gap-2 cursor-pointer border border-slate-700 transition-all"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Back to Stage 2 (Profile Review)</span>
+              </button>
+            )}
+            <div className="hidden sm:block text-xs text-slate-400 ml-2">
+              Mode: <strong className="text-indigo-300">{mode === 'LOCAL' ? 'Local Test Mode' : 'Realtime Online Mode'}</strong>
+            </div>
           </div>
 
           <button
