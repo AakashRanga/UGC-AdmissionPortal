@@ -4,10 +4,10 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host 0.0.0.0 --port 8192",
     "build": "vite build",
-    "preview": "vite preview",
-    "server": "python -m uvicorn backend.main:app --reload --port 8000"
+    "preview": "vite preview --host 0.0.0.0 --port 8192",
+    "server": "python -m uvicorn backend.main:app --host 0.0.0.0 --port 8191 --reload"
   },
   "dependencies": {
     "lucide-react": "^0.469.0",

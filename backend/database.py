@@ -1,7 +1,9 @@
 import logging
 import os
+import urllib.parse
 import pymysql
 from sqlalchemy import create_engine
+from sqlalchemy.engine import URL
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from backend.config import settings
@@ -15,9 +17,9 @@ def ensure_mysql_database_exists():
     try:
         conn = pymysql.connect(
             host=settings.MYSQL_HOST,
-            port=settings.MYSQL_PORT,
+            port=int(settings.MYSQL_PORT),
             user=settings.MYSQL_USER,
-            password=settings.MYSQL_PASSWORD,
+            password=str(settings.MYSQL_PASSWORD) if settings.MYSQL_PASSWORD else "",
             autocommit=True
         )
         with conn.cursor() as cursor:
@@ -30,12 +32,18 @@ def ensure_mysql_database_exists():
 def get_mysql_engine(user=settings.MYSQL_USER, password=settings.MYSQL_PASSWORD, host=settings.MYSQL_HOST, port=settings.MYSQL_PORT, db=settings.MYSQL_DB):
     ensure_mysql_database_exists()
     
-    if password:
-        mysql_url = f"mysql+pymysql://{user}:{password}@{host}:{port}/{db}?charset=utf8mb4"
-    else:
-        mysql_url = f"mysql+pymysql://{user}@{host}:{port}/{db}?charset=utf8mb4"
+    # Use SQLAlchemy URL.create to safely encode special characters (e.g. '@', '#', ':') in passwords
+    url_object = URL.create(
+        drivername="mysql+pymysql",
+        username=user,
+        password=password,
+        host=host,
+        port=int(port),
+        database=db,
+        query={"charset": "utf8mb4"}
+    )
         
-    engine = create_engine(mysql_url, pool_pre_ping=True, pool_recycle=3600)
+    engine = create_engine(url_object, pool_pre_ping=True, pool_recycle=3600)
     return engine
 
 engine = get_mysql_engine()

@@ -19,48 +19,49 @@ A production-ready web application built for Higher Educational Institutions (HE
 
 ---
 
-## 🚀 Quick Start Guide
+## 🚀 Quick Start Guide (Running Backend & Frontend)
+
+To run the complete system, you will need **two terminal windows**: one for the FastAPI Python Backend and one for the React/Vite Frontend.
+
+---
 
 ### 1. Prerequisites
 - **Python**: Version `3.10` or higher
 - **Node.js**: Version `18.0` or higher
-- **MySQL Server**: Running on port `3308` (or custom port set in `.env`)
+- **MySQL Server**: Running on your local machine or server (Port `3308` or `3306`)
 
 ---
 
-### 2. Backend Setup & Running (FastAPI)
+### 2. Terminal 1: Run the Backend Server (FastAPI)
 
-1. Navigate to the backend directory or project root:
+1. Open a terminal in the project root directory (`DEB`):
    ```bash
-   cd backend
+   cd c:\Users\clare\OneDrive\Desktop\DEB
    ```
 
-2. Create a Python Virtual Environment (`venv`):
-   ```bash
-   python -m venv venv
-   ```
-
-3. Activate the Virtual Environment:
+2. *(Optional but recommended)* Create and activate a Python Virtual Environment:
    - **Windows (PowerShell)**:
      ```powershell
+     python -m venv venv
      .\venv\Scripts\Activate.ps1
      ```
    - **Windows (Command Prompt)**:
      ```cmd
+     python -m venv venv
      venv\Scripts\activate.bat
      ```
    - **Linux / macOS**:
      ```bash
+     python3 -m venv venv
      source venv/bin/activate
      ```
 
-4. Install backend dependencies:
+3. Install required Python packages:
    ```bash
    pip install -r requirements.txt
    ```
 
-5. Configure Environment Variables in `backend/.env`:
-   Make sure `backend/.env` contains your UGC API keys and MySQL credentials:
+4. Configure your MySQL connection and API keys in `backend/.env`:
    ```env
    # UGC DEB API Credentials
    UGC_FETCH_STUDENT_URL=http://deb.ugc.ac.in/api/DebUniqueID/GetStudentDetails
@@ -75,33 +76,45 @@ A production-ready web application built for Higher Educational Institutions (HE
    MYSQL_USER=root
    MYSQL_PASSWORD=your_password
    MYSQL_DB=ugc_deb_admission
+
+   # Application Mode ('ONLINE' or 'LOCAL')
+   APP_MODE=ONLINE
    ```
 
-6. Start the FastAPI backend server:
-   From project root:
+5. **Start the FastAPI Backend Server (Port 8191, Host 0.0.0.0)**:
    ```bash
-   python -m uvicorn backend.main:app --port 8000 --reload
+   python -m uvicorn backend.main:app --host 0.0.0.0 --port 8191 --reload
    ```
-   *The backend will run on `http://localhost:8000` with Swagger docs at `http://localhost:8000/docs`.*
+
+6. **Verify Backend is Running**:
+   - Local Health Check: [http://localhost:8191/api/health](http://localhost:8191/api/health)
+   - Public IP Health Check: `http://180.235.121.253:8191/api/health`
+   - Interactive Swagger API Docs: [http://localhost:8191/docs](http://localhost:8191/docs)
+   - Alternative ReDoc: [http://localhost:8191/redoc](http://localhost:8191/redoc)
 
 ---
 
-### 3. Frontend Setup & Running (React + Vite)
+### 3. Terminal 2: Run the Frontend Server (React + Vite on Port 8192)
 
-1. Open a new terminal in the project root (`DEB` directory).
+1. Open a **second terminal** in the project root directory (`DEB`):
+   ```bash
+   cd c:\Users\clare\OneDrive\Desktop\DEB
+   ```
 
-2. Install Node dependencies:
+2. Install Node dependencies (first time only):
    ```bash
    npm install
    ```
 
-3. Start the development server:
+3. **Start the Frontend Server (Port 8192, Host 0.0.0.0)**:
    ```bash
    npm run dev
    ```
-   *The frontend application will open on `http://localhost:5173`.*
 
----
+4. **Access the Portal**:
+   - **Local Browser**: **[http://localhost:8192](http://localhost:8192)**
+   - **Public IP Access**: **`http://180.235.121.253:8192`**
+   - Login with your administrator credentials (`admin` / `admin123`).
 
 ## 🗄️ Database Schema & Structure
 
