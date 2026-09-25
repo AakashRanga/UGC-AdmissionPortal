@@ -7,17 +7,17 @@ export function SimatsLogo({ className = "", showSubtitle = true }) {
       <img
         src="/logo1.png"
         alt="Saveetha Institute of Medical and Technical Sciences"
-        className="w-11 h-11 sm:w-12 sm:h-12 shrink-0 object-contain drop-shadow-md hover:scale-105 transition-transform"
+        className="w-11 h-11 sm:w-12 sm:h-12 shrink-0 object-contain drop-shadow-sm hover:scale-105 transition-transform"
       />
 
-      {/* University Titles */}
+      {/* University Titles in Official Navy Blue & Gold */}
       <div className="flex flex-col">
-        <span className="text-sm sm:text-base font-extrabold tracking-tight text-white font-heading leading-tight">
+        <span className="text-sm sm:text-base font-extrabold tracking-tight text-slate-900 font-heading leading-tight">
           Saveetha Institute of Medical and Technical Sciences
         </span>
         {showSubtitle && (
-          <span className="text-[10px] text-slate-400 font-medium mt-0.5">
-            Directorate of Distance & Online Education &bull; UGC DEB Portal
+          <span className="text-[10px] text-amber-700 font-bold uppercase tracking-wider mt-0.5">
+            Online Education &bull; UGC DEB Portal
           </span>
         )}
       </div>

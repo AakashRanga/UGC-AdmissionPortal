@@ -121,6 +121,15 @@ export const apiService = {
       });
       const data = await res.json();
       const latency = Math.round(performance.now() - startTime);
+
+      if (!res.ok) {
+        return {
+          status: "error",
+          message: data.detail || data.message || `Server returned error (${res.status})`,
+          latency
+        };
+      }
+
       return { ...data, latency };
     } catch (e) {
       return {
@@ -129,6 +138,20 @@ export const apiService = {
         latency: Math.round(performance.now() - startTime)
       };
     }
+  },
+
+  // Check Duplicate Admission in Database in Realtime
+  async checkDuplicateAdmission(debUniqueId, enrollmentNo) {
+    try {
+      const params = new URLSearchParams();
+      if (debUniqueId) params.append('deb_unique_id', debUniqueId);
+      if (enrollmentNo) params.append('enrollment_no', enrollmentNo);
+      const res = await fetch(`/api/deb/check-duplicate?${params.toString()}`);
+      if (res.ok) return await res.json();
+    } catch (e) {
+      console.error("Error checking duplicate in database:", e);
+    }
+    return { status: "error", is_duplicate: false };
   },
 
   // Get Stored Admissions from Database

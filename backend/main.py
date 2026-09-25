@@ -4,6 +4,8 @@ import logging
 import datetime
 import hashlib
 import secrets
+import re
+from typing import Optional
 import httpx
 from fastapi import FastAPI, Depends, HTTPException, Query, Header
 from fastapi.middleware.cors import CORSMiddleware
@@ -152,29 +154,65 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-def sanitize_response(text_body: str) -> str:
-    """Sanitize HTML error responses (e.g. 404/500 IIS pages) into human-readable messages."""
-    if not text_body:
-        return "Empty response received from server."
-    if "<!DOCTYPE" in text_body or "<html" in text_body.lower():
-        if "404" in text_body or "Not Found" in text_body:
-            return "HTTP Error 404: The requested UGC DEB endpoint or DEB Unique ID was not found."
-        elif "500" in text_body or "Internal Server Error" in text_body:
-            return "HTTP Error 500: UGC DEB Portal server encountered an internal error."
+def redact_sensitive_keys(text_content: str) -> str:
+    """Redact institutional API keys and secret tokens from strings or JSON payloads."""
+    if not text_content:
+        return ""
+    
+    redacted = str(text_content)
+    
+    # Redact known API keys from environment settings
+    known_keys = [
+        settings.UGC_FETCH_STUDENT_API_KEY,
+        settings.UGC_SUBMIT_ADMISSION_API_KEY,
+        getattr(settings, "UGC_FETCH_STUDENT_CLIENT_ID", ""),
+        getattr(settings, "UGC_SUBMIT_ADMISSION_CLIENT_ID", "")
+    ]
+    for k in known_keys:
+        if k and len(k.strip()) >= 6:
+            redacted = redacted.replace(k.strip(), "[REDACTED_API_KEY]")
+
+    # Redact any header/param patterns like 'APIKey: ...' or 'apiKey=...'
+    redacted = re.sub(r'(APIKey|apiKey|client_id|ClientID)[:=]\s*([a-zA-Z0-9_-]{6,})', r'\1: [REDACTED_API_KEY]', redacted, flags=re.IGNORECASE)
+    
+    return redacted
+
+def sanitize_ugc_user_message(raw_msg: str, status_code: int = 200) -> str:
+    """Convert raw, restricted, or cryptic UGC response messages into user-friendly, safe notices."""
+    if not raw_msg:
+        return "No response details received from UGC DEB Portal."
+
+    # First redact any sensitive keys
+    clean_msg = redact_sensitive_keys(str(raw_msg))
+    lower_msg = clean_msg.lower()
+
+    if "process refused" in lower_msg or "refused" in lower_msg:
+        return "UGC DEB Server: Request Refused / Unauthorized. Please verify your institution's public server IP is whitelisted with the UGC DEB Directorate."
+    elif "ip not whitelisted" in lower_msg or "whitelist" in lower_msg or "forbidden" in lower_msg or status_code == 403:
+        return "UGC DEB Server: IP Access Restricted. The server IP address is not authorized in the UGC DEB Firewall."
+    elif "401" in lower_msg or "unauthorized" in lower_msg or status_code == 401:
+        return "UGC DEB Server: Authentication failed. Please check the institution's API Key configuration."
+    elif "<!doctype" in lower_msg or "<html" in lower_msg:
+        if "404" in lower_msg or status_code == 404:
+            return "UGC DEB Server: Requested service endpoint or DEB Unique ID was not found (HTTP 404)."
+        elif "500" in lower_msg or status_code == 500:
+            return "UGC DEB Server: The remote portal encountered an internal server error (HTTP 500)."
         else:
-            return "The UGC DEB Portal returned an unexpected HTML error page instead of JSON."
-    return text_body[:300]
+            return "UGC DEB Server: Unexpected response received from government portal."
+    
+    return clean_msg[:250]
 
 def normalize_ugc_student_response(resp_json: dict) -> dict:
-    """Normalize raw response from UGC GetStudentDetails into standardized format."""
+    """Normalize raw response from UGC GetStudentDetails into standardized, secure format."""
     if not isinstance(resp_json, dict):
         return {"status": "error", "message": "Invalid response format received from UGC API."}
 
     # Check for failure/refusal status explicitly
     status_str = str(resp_json.get("status") or resp_json.get("Status") or "").lower()
     if any(err_word in status_str for err_word in ["error", "refused", "fail", "invalid", "404", "500"]):
-        msg = resp_json.get("message") or resp_json.get("Message") or resp_json.get("error") or resp_json.get("details") or f"UGC Server returned: {resp_json.get('status') or 'Process Refused'}"
-        return {"status": "error", "message": str(msg), "raw_response": resp_json}
+        raw_msg = resp_json.get("message") or resp_json.get("Message") or resp_json.get("error") or resp_json.get("details") or resp_json.get("status") or "Process Refused"
+        user_msg = sanitize_ugc_user_message(str(raw_msg))
+        return {"status": "error", "message": user_msg}
 
     # Check for success structure
     target = resp_json.get("data") or resp_json.get("Resource") or resp_json.get("List") or resp_json.get("details") or resp_json
@@ -195,28 +233,27 @@ def normalize_ugc_student_response(resp_json: dict) -> dict:
                 "status": "success",
                 "message": "Student profile fetched successfully from UGC DEB Portal",
                 "data": {
-                    "studentName": name,
-                    "gender": gender,
-                    "dob": dob,
-                    "universityName": univ,
-                    "abcId": abc_id
-                },
-                "raw_response": resp_json
+                    "studentName": redact_sensitive_keys(str(name)),
+                    "gender": redact_sensitive_keys(str(gender)),
+                    "dob": redact_sensitive_keys(str(dob)),
+                    "universityName": redact_sensitive_keys(str(univ)),
+                    "abcId": redact_sensitive_keys(str(abc_id))
+                }
             }
 
-    msg = resp_json.get("message") or resp_json.get("Message") or "DEB Unique ID not registered or no profile data found on UGC portal."
-    return {"status": "error", "message": str(msg), "raw_response": resp_json}
+    raw_msg = resp_json.get("message") or resp_json.get("Message") or "DEB Unique ID not registered or no profile data found on UGC portal."
+    return {"status": "error", "message": sanitize_ugc_user_message(str(raw_msg))}
 
 def log_api_call(db: Session, endpoint: str, method: str, req_params: str, headers: str, status_code: int, response_body: str, mode_used: str):
-    """Save API audit log to MySQL database."""
+    """Save API audit log to MySQL database with sensitive keys redacted."""
     try:
         log_entry = ApiLog(
-            endpoint=endpoint,
+            endpoint=redact_sensitive_keys(endpoint[:500]),
             method=method,
-            request_params=req_params[:1000] if req_params else None,
-            headers_sent=headers[:500] if headers else None,
+            request_params=redact_sensitive_keys(req_params[:1000]) if req_params else None,
+            headers_sent=redact_sensitive_keys(headers[:500]) if headers else None,
             response_status=status_code,
-            response_body=response_body[:2000] if response_body else None,
+            response_body=redact_sensitive_keys(response_body[:2000]) if response_body else None,
             mode=mode_used
         )
         db.add(log_entry)
@@ -364,9 +401,35 @@ def list_admin_users(db: Session = Depends(get_db)):
 @app.get("/api/admissions")
 @app.get("/api/deb/admissions")
 def get_all_admissions(db: Session = Depends(get_db)):
-    """Retrieve all admission records saved in MySQL database."""
+    """Retrieve all admission records saved in MySQL database with sensitive credentials redacted."""
     records = db.query(AdmissionRecord).order_by(AdmissionRecord.created_at.desc()).all()
-    return {"status": "success", "count": len(records), "data": records}
+    sanitized_records = []
+    for r in records:
+        r_dict = {
+            "id": r.id,
+            "deb_unique_id": r.deb_unique_id,
+            "abc_id": r.abc_id,
+            "student_name": r.student_name,
+            "hei_code": r.hei_code,
+            "enrollment_no": r.enrollment_no,
+            "mode_education": r.mode_education,
+            "programme_name": r.programme_name,
+            "admission_date": r.admission_date,
+            "category": r.category,
+            "gov_id_type": r.gov_id_type,
+            "gov_id_number": r.gov_id_number,
+            "locality": r.locality,
+            "nationality": r.nationality,
+            "country_residence": r.country_residence,
+            "admission_details": r.admission_details,
+            "sync_status": r.sync_status,
+            "ugc_response": redact_sensitive_keys(r.ugc_response),
+            "mode_used": r.mode_used,
+            "created_at": r.created_at,
+            "updated_at": r.updated_at
+        }
+        sanitized_records.append(r_dict)
+    return {"status": "success", "count": len(sanitized_records), "data": sanitized_records}
 
 @app.delete("/api/admissions/{admission_id}")
 @app.delete("/api/deb/admissions/{admission_id}")
@@ -379,12 +442,72 @@ def delete_admission(admission_id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"status": "success", "message": f"Admission record #{admission_id} deleted successfully."}
 
+@app.get("/api/admissions/check-duplicate")
+@app.get("/api/deb/check-duplicate")
+def check_duplicate(
+    deb_unique_id: Optional[str] = Query(None, alias="deb_unique_id"),
+    enrollment_no: Optional[str] = Query(None, alias="enrollment_no"),
+    db: Session = Depends(get_db)
+):
+    """Check whether a DEB Unique ID or Enrollment Number already exists in the MySQL admissions database."""
+    deb_exists = None
+    enrollment_exists = None
+
+    if deb_unique_id and deb_unique_id.strip():
+        existing_deb = db.query(AdmissionRecord).filter(
+            AdmissionRecord.deb_unique_id == deb_unique_id.strip()
+        ).first()
+        if existing_deb:
+            deb_exists = {
+                "id": existing_deb.id,
+                "deb_unique_id": existing_deb.deb_unique_id,
+                "student_name": existing_deb.student_name,
+                "enrollment_no": existing_deb.enrollment_no,
+                "programme_name": existing_deb.programme_name,
+                "admission_date": existing_deb.admission_date
+            }
+
+    if enrollment_no and enrollment_no.strip():
+        existing_enr = db.query(AdmissionRecord).filter(
+            AdmissionRecord.enrollment_no == enrollment_no.strip()
+        ).first()
+        if existing_enr:
+            enrollment_exists = {
+                "id": existing_enr.id,
+                "deb_unique_id": existing_enr.deb_unique_id,
+                "student_name": existing_enr.student_name,
+                "enrollment_no": existing_enr.enrollment_no,
+                "programme_name": existing_enr.programme_name,
+                "admission_date": existing_enr.admission_date
+            }
+
+    return {
+        "status": "success",
+        "is_duplicate": bool(deb_exists or enrollment_exists),
+        "deb_exists": deb_exists,
+        "enrollment_exists": enrollment_exists
+    }
+
 @app.get("/api/logs")
 @app.get("/api/deb/logs")
 def get_api_logs(limit: int = 50, db: Session = Depends(get_db)):
-    """Retrieve API audit logs from MySQL database."""
+    """Retrieve API audit logs from MySQL database with sensitive credentials redacted."""
     logs = db.query(ApiLog).order_by(ApiLog.timestamp.desc()).limit(limit).all()
-    return {"status": "success", "count": len(logs), "data": logs}
+    sanitized_logs = []
+    for l in logs:
+        l_dict = {
+            "id": l.id,
+            "endpoint": redact_sensitive_keys(l.endpoint),
+            "method": l.method,
+            "request_params": redact_sensitive_keys(l.request_params),
+            "headers_sent": redact_sensitive_keys(l.headers_sent),
+            "response_status": l.response_status,
+            "response_body": redact_sensitive_keys(l.response_body),
+            "mode": l.mode,
+            "timestamp": l.timestamp
+        }
+        sanitized_logs.append(l_dict)
+    return {"status": "success", "count": len(sanitized_logs), "data": sanitized_logs}
 
 @app.post("/api/deb/fetch-student")
 async def fetch_student_details(req: StudentFetchRequest, db: Session = Depends(get_db)):
@@ -437,7 +560,7 @@ async def fetch_student_details(req: StudentFetchRequest, db: Session = Depends(
             try:
                 resp_json = resp.json()
             except Exception:
-                clean_msg = sanitize_response(resp.text)
+                clean_msg = sanitize_ugc_user_message(resp.text, status_code=status_code)
                 resp_json = {"status": "error", "message": clean_msg}
 
             log_api_call(db, target_url, "POST", f"DEBUniqueID={deb_id}", f"APIKey: {api_key}, ClientID: {client_id}", status_code, json.dumps(resp_json) if isinstance(resp_json, dict) else str(resp_json), "ONLINE")
@@ -449,16 +572,49 @@ async def fetch_student_details(req: StudentFetchRequest, db: Session = Depends(
             return normalized
         
         except Exception as err:
+            safe_err = sanitize_ugc_user_message(str(err), status_code=500)
             error_payload = {
                 "status": "error",
-                "message": f"Connection Error: Could not connect to UGC DEB Portal server ({str(err)}). Please check your internet connection.",
-                "details": f"Online request to {target_url} failed or timed out."
+                "message": f"Connection Notice: Could not reach UGC DEB Portal ({safe_err}).",
+                "details": "Online request to UGC server failed or timed out."
             }
             log_api_call(db, target_url, "POST", f"DEBUniqueID={deb_id}", f"APIKey: {api_key}, ClientID: {client_id}", 500, json.dumps(error_payload), "ONLINE")
             return error_payload
 
 @app.post("/api/deb/submit-admission")
 async def submit_admission(req: AdmissionSubmissionRequest, db: Session = Depends(get_db)):
+    deb_id_clean = req.DEBuniqueID.strip() if req.DEBuniqueID else ""
+    enrollment_clean = req.EnrollmentNumber.strip() if req.EnrollmentNumber else ""
+
+    # 1. Validation: DEB ID and Enrollment No cannot be identical
+    if deb_id_clean and enrollment_clean and deb_id_clean.lower() == enrollment_clean.lower():
+        raise HTTPException(
+            status_code=400,
+            detail="DEB Unique ID and Enrollment Number cannot be identical. Please provide a distinct HEI Enrollment Number."
+        )
+
+    # 2. Validation: DEB ID already exists in Database
+    if deb_id_clean:
+        existing_deb = db.query(AdmissionRecord).filter(
+            AdmissionRecord.deb_unique_id == deb_id_clean
+        ).first()
+        if existing_deb:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Database Validation Error: DEB Unique ID '{deb_id_clean}' is already registered in the Admissions Database (Record #{existing_deb.id} for student '{existing_deb.student_name}'). Duplicate DEB ID is not allowed."
+            )
+
+    # 3. Validation: Enrollment Number already exists in Database
+    if enrollment_clean:
+        existing_enr = db.query(AdmissionRecord).filter(
+            AdmissionRecord.enrollment_no == enrollment_clean
+        ).first()
+        if existing_enr:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Database Validation Error: Enrollment Number '{enrollment_clean}' is already assigned in the Admissions Database (Record #{existing_enr.id} for student '{existing_enr.student_name}', DEB ID: {existing_enr.deb_unique_id}). Duplicate enrollment number is not allowed."
+            )
+
     mode = req.mode.upper() if req.mode else "LOCAL"
     api_key = getattr(req, "apiKey", None) or settings.UGC_SUBMIT_ADMISSION_API_KEY
     client_id = getattr(req, "clientId", None) or settings.UGC_SUBMIT_ADMISSION_CLIENT_ID
@@ -515,24 +671,26 @@ async def submit_admission(req: AdmissionSubmissionRequest, db: Session = Depend
             try:
                 resp_json = resp.json()
             except Exception:
-                clean_msg = sanitize_response(resp.text)
+                clean_msg = sanitize_ugc_user_message(resp.text, status_code=status_code)
                 resp_json = {"status": "error", "message": clean_msg}
 
             raw_ugc_resp = json.dumps(resp_json) if isinstance(resp_json, dict) else str(resp_json)
             log_api_call(db, target_url, "POST", param_str, f"APIKey: {api_key}, ClientID: {client_id}", status_code, raw_ugc_resp, "ONLINE")
 
-            if status_code == 200 and isinstance(resp_json, dict) and (resp_json.get("status") == "Process Success" or resp_json.get("Status") == "Process Success"):
+            if status_code == 200 and isinstance(resp_json, dict) and (str(resp_json.get("status")).lower() == "process success" or str(resp_json.get("Status")).lower() == "process success"):
                 ugc_status = "UGC_SYNCED"
                 user_message = "Admission successfully pushed to UGC DEB Portal and saved in MySQL Database."
             else:
                 ugc_status = "UGC_FAILED"
-                err_detail = resp_json.get("message") if isinstance(resp_json, dict) else resp.text
-                user_message = f"UGC DEB Reverse Push Warning: {err_detail} (Admission saved locally in MySQL DB)."
+                raw_err = resp_json.get("message") or resp_json.get("Message") or resp_json.get("details") or (resp.text if not isinstance(resp_json, dict) else "Process Refused")
+                safe_err = sanitize_ugc_user_message(str(raw_err), status_code=status_code)
+                user_message = f"UGC Sync Notice: {safe_err} (Admission record saved locally in MySQL DB)."
         
         except Exception as err:
             ugc_status = "UGC_ERROR"
-            raw_ugc_resp = str(err)
-            user_message = f"Saved in MySQL DB. Note: Could not sync with UGC DEB Portal server ({str(err)})."
+            safe_err = sanitize_ugc_user_message(str(err), status_code=500)
+            raw_ugc_resp = redact_sensitive_keys(str(err))
+            user_message = f"Saved in MySQL DB. Note: Could not sync with UGC DEB Portal server ({safe_err})."
             log_api_call(db, target_url, "POST", param_str, f"APIKey: {api_key}, ClientID: {client_id}", 500, raw_ugc_resp, "ONLINE")
 
     # Save record to MySQL Database

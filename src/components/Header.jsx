@@ -4,33 +4,33 @@ import { SimatsLogo } from './SimatsLogo';
 
 export function Header({ activeTab, setActiveTab, mode, setMode, currentUser, onLogout }) {
   return (
-    <header className="sticky top-0 z-40 glass-panel border-b border-indigo-500/20 px-4 lg:px-8 py-3.5 shadow-2xl">
+    <header className="sticky top-0 z-30 bg-white/92 backdrop-blur-md border-b border-amber-200/60 px-4 lg:px-8 py-3 shadow-xs">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
         {/* Brand & Identity: SIMATS University */}
         <SimatsLogo />
 
         {/* Header Navigation Tabs & Actions */}
         <div className="flex flex-wrap items-center gap-3">
-          {/* Header Navigation Tabs */}
-          <div className="flex items-center bg-slate-900/90 p-1 rounded-xl border border-slate-700/60">
+          {/* Header Navigation Tabs - Styled like SIMATS Education Navigation Pills */}
+          <div className="flex items-center bg-[#FDFBF7] p-1 rounded-full border border-amber-200/60 shadow-2xs">
             <button
               onClick={() => setActiveTab('flow')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
+              className={`px-4 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
                 activeTab === 'flow'
-                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/30'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-[#FDF3DE] text-[#9A3412] font-bold shadow-xs border border-amber-300/80'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white'
               }`}
             >
               <FileText className="w-3.5 h-3.5" />
-              Admission Process
+              Admission Flow
             </button>
 
             <button
               onClick={() => setActiveTab('database')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
+              className={`px-4 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
                 activeTab === 'database'
-                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/30'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-[#FDF3DE] text-[#9A3412] font-bold shadow-xs border border-amber-300/80'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white'
               }`}
             >
               <Database className="w-3.5 h-3.5" />
@@ -39,13 +39,13 @@ export function Header({ activeTab, setActiveTab, mode, setMode, currentUser, on
           </div>
 
           {/* Mode Switcher */}
-          <div className="flex items-center bg-slate-900/90 p-1 rounded-xl border border-slate-700/60">
+          <div className="flex items-center bg-[#FDFBF7] p-1 rounded-full border border-amber-200/60 shadow-2xs">
             <button
               onClick={() => setMode('LOCAL')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
+              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
                 mode === 'LOCAL'
-                  ? 'bg-amber-600 text-white shadow-md shadow-amber-500/20'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-amber-600 text-white shadow-xs font-bold'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white'
               }`}
             >
               <Cpu className="w-3.5 h-3.5" />
@@ -54,10 +54,10 @@ export function Header({ activeTab, setActiveTab, mode, setMode, currentUser, on
 
             <button
               onClick={() => setMode('ONLINE')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
+              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
                 mode === 'ONLINE'
-                  ? 'bg-emerald-600 text-white shadow-md shadow-emerald-500/20'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-emerald-600 text-white shadow-xs font-bold'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white'
               }`}
             >
               <ShieldCheck className="w-3.5 h-3.5" />
@@ -67,20 +67,20 @@ export function Header({ activeTab, setActiveTab, mode, setMode, currentUser, on
 
           {/* Admin User Profile & Logout */}
           {currentUser && (
-            <div className="flex items-center gap-2 pl-2 border-l border-slate-800">
+            <div className="flex items-center gap-2.5 pl-2 border-l border-amber-200/60">
               <div className="hidden lg:flex flex-col text-right">
-                <span className="text-[11px] font-bold text-white flex items-center gap-1 justify-end">
-                  <UserCheck className="w-3 h-3 text-emerald-400" />
+                <span className="text-[11px] font-bold text-slate-900 flex items-center gap-1 justify-end">
+                  <UserCheck className="w-3.5 h-3.5 text-emerald-600" />
                   {currentUser.username || 'admin'}
                 </span>
-                <span className="text-[9px] text-indigo-300 font-semibold uppercase tracking-wider">
+                <span className="text-[9px] text-amber-700 font-bold uppercase tracking-wider">
                   {currentUser.role || 'Admin'}
                 </span>
               </div>
 
               <button
                 onClick={onLogout}
-                className="px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 hover:text-rose-200 border border-rose-500/30 text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
+                className="px-3.5 py-1.5 rounded-full bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
                 title="Log out of Admin Session"
               >
                 <LogOut className="w-3.5 h-3.5" />

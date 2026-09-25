@@ -115,46 +115,46 @@ export function FlowTester({ isOpen, onClose, mode, heiCode, apiKey }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in">
-      <div className="glass-panel max-w-2xl w-full rounded-2xl p-6 border border-indigo-500/30 shadow-2xl">
-        <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-amber-950/20 backdrop-blur-sm animate-fade-in">
+      <div className="bg-white max-w-2xl w-full rounded-2xl p-6 border border-amber-100 shadow-2xl">
+        <div className="flex items-center justify-between pb-4 border-b border-slate-100">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-indigo-400" />
-            <h3 className="text-lg font-bold text-white font-heading">
+            <Sparkles className="w-5 h-5 text-blue-700" />
+            <h3 className="text-lg font-bold text-slate-900 font-heading">
               1-Click Complete Admission Flow Test Suite
             </h3>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-white font-bold text-lg">
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-700 font-bold text-lg p-1">
             ✕
           </button>
         </div>
 
         <div className="mt-4 space-y-4">
-          <p className="text-xs text-slate-300">
+          <p className="text-xs text-slate-600">
             Automatically runs end-to-end integration tests for student profile lookup, dynamic pre-filling, reverse API push, and MySQL database mapping.
           </p>
 
-          <div className="flex items-center gap-3 bg-slate-900/80 p-3 rounded-xl border border-slate-800 text-xs">
-            <span>Test Mode: <strong className="text-amber-300">{mode}</strong></span>
+          <div className="flex items-center gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs text-slate-700">
+            <span>Test Mode: <strong className="text-amber-700">{mode}</strong></span>
             <span>•</span>
-            <span>HEI AISHE Code: <strong className="text-indigo-300">{heiCode}</strong></span>
+            <span>HEI AISHE Code: <strong className="text-blue-700">{heiCode}</strong></span>
           </div>
 
           {/* Test Steps Output */}
           <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
             {steps.map((s, idx) => (
-              <div key={idx} className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs flex items-center justify-between gap-3">
+              <div key={idx} className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2.5">
-                  {s.status === 'running' && <Loader2 className="w-4 h-4 text-indigo-400 animate-spin" />}
-                  {s.status === 'pass' && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
-                  {s.status === 'fail' && <XCircle className="w-4 h-4 text-rose-400" />}
+                  {s.status === 'running' && <Loader2 className="w-4 h-4 text-blue-600 animate-spin" />}
+                  {s.status === 'pass' && <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
+                  {s.status === 'fail' && <XCircle className="w-4 h-4 text-rose-600" />}
                   <div>
-                    <div className="font-semibold text-white">{s.name}</div>
-                    {s.detail && <div className="text-[11px] text-slate-400 font-mono mt-0.5">{s.detail}</div>}
+                    <div className="font-semibold text-slate-900">{s.name}</div>
+                    {s.detail && <div className="text-[11px] text-slate-500 font-mono mt-0.5">{s.detail}</div>}
                   </div>
                 </div>
                 <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                  s.status === 'pass' ? 'bg-emerald-500/20 text-emerald-400' : s.status === 'fail' ? 'bg-rose-500/20 text-rose-400' : 'bg-indigo-500/20 text-indigo-300'
+                  s.status === 'pass' ? 'bg-emerald-100 text-emerald-800' : s.status === 'fail' ? 'bg-rose-100 text-rose-800' : 'bg-blue-100 text-blue-800'
                 }`}>
                   {s.status.toUpperCase()}
                 </span>
@@ -165,10 +165,10 @@ export function FlowTester({ isOpen, onClose, mode, heiCode, apiKey }) {
           {/* Summary Box */}
           {summary && (
             <div className={`p-4 rounded-xl text-xs flex items-center justify-between ${
-              summary.success ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-300' : 'bg-rose-500/10 border border-rose-500/30 text-rose-300'
+              summary.success ? 'bg-emerald-50 border border-emerald-200 text-emerald-800' : 'bg-rose-50 border border-rose-200 text-rose-800'
             }`}>
               <div className="font-bold flex items-center gap-2 text-sm">
-                {summary.success ? <CheckCircle2 className="w-5 h-5 text-emerald-400" /> : <XCircle className="w-5 h-5 text-rose-400" />}
+                {summary.success ? <CheckCircle2 className="w-5 h-5 text-emerald-600" /> : <XCircle className="w-5 h-5 text-rose-600" />}
                 <span>{summary.success ? 'All Admission Integration Tests Passed!' : 'Some Test Steps Failed'}</span>
               </div>
               <div className="font-mono font-bold">
@@ -178,10 +178,10 @@ export function FlowTester({ isOpen, onClose, mode, heiCode, apiKey }) {
           )}
         </div>
 
-        <div className="pt-4 mt-4 border-t border-slate-800 flex justify-end gap-2">
+        <div className="pt-4 mt-4 border-t border-slate-100 flex justify-end gap-2">
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-xl text-xs text-slate-400 hover:text-white"
+            className="px-4 py-2 rounded-xl text-xs text-slate-600 hover:text-slate-900 font-semibold"
           >
             Close
           </button>

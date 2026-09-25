@@ -14,8 +14,8 @@ class Settings(BaseSettings):
     UGC_SUBMIT_ADMISSION_CLIENT_ID: str = ""
     UGC_SUBMIT_ADMISSION_API_KEY: str = ""
 
-    # HEI AISHE / Institution Name
-    DEFAULT_HEI_CODE: str = "Saveetha Institute of Medical and Technical Sciences"
+    # HEI AISHE / Institution Name (Default: Empty)
+    DEFAULT_HEI_CODE: str = ""
 
     # MySQL Database Configuration
     MYSQL_HOST: str = "localhost"

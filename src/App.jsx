@@ -6,9 +6,28 @@ import { AdmissionFormStep } from './components/AdmissionFormStep';
 import { DatabaseViewer } from './components/DatabaseViewer';
 import { LoginPage } from './components/LoginPage';
 import { apiService } from './services/apiService';
-import { CheckCircle2, AlertTriangle, Database, RotateCcw, X, Info } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, Database, RotateCcw, X, Info, Sparkles, Palette } from 'lucide-react';
 
 export default function App() {
+  // Marble Background Toggle (Default: false -> Plain #FDF3DE, ON -> Marble Effect)
+  const [marbleOn, setMarbleOn] = useState(() => {
+    try {
+      const stored = localStorage.getItem('deb_marble_on');
+      return stored !== null ? JSON.parse(stored) : false; // Default: false (plain #FDF3DE)
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('deb_marble_on', JSON.stringify(marbleOn));
+    if (marbleOn) {
+      document.body.classList.remove('bg-plain-theme');
+    } else {
+      document.body.classList.add('bg-plain-theme');
+    }
+  }, [marbleOn]);
+
   // Authentication State
   const [currentUser, setCurrentUser] = useState(() => {
     try {
@@ -77,15 +96,35 @@ export default function App() {
   };
 
   // Step 3: Submit Admission Data
-  const handleSubmitAdmission = async (formData) => {
+  const handleSubmitAdmission = async (formDataToSubmit) => {
     setLoadingSubmit(true);
     setErrorMessage(null);
 
-    const res = await apiService.submitAdmission(formData, mode);
+    const res = await apiService.submitAdmission(formDataToSubmit, mode);
     setLoadingSubmit(false);
 
     if (res.status === 'success' || res.sync_status === 'UGC_SYNCED' || res.sync_status === 'LOCAL_ONLY') {
       setLastSubmission(res);
+      // Clear previous stage data so the same application cannot be re-submitted
+      setDebId('');
+      setStudentProfile(null);
+      setFormData({
+        DEBuniqueID: '',
+        ABCID: '',
+        studentName: '',
+        UniversityName: '',
+        EnrollmentNumber: '',
+        ModeEducation: 'Online(OL)',
+        CourseName: 'Bachelor of Computer Applications(BCA)',
+        AdmissionDate: new Date().toISOString().split('T')[0],
+        Category: 'General',
+        GovernmentIdentifier: 'AADHAR Card',
+        GovernmentIdentifierNumber: '',
+        Locality: 'Urban',
+        Nationality: 'Indian',
+        CountryResidence: 'India',
+        AdmissionDetails: '13'
+      });
       setFlowStage('success');
       showToast(res.message || `Admission record #${res.db_record_id} saved successfully!`, 'success');
       loadAdmissions();
@@ -101,7 +140,7 @@ export default function App() {
     DEBuniqueID: '',
     ABCID: '',
     studentName: '',
-    UniversityName: 'Saveetha Institute of Medical and Technical Sciences',
+    UniversityName: '',
     EnrollmentNumber: '',
     ModeEducation: 'Online(OL)',
     CourseName: 'Bachelor of Computer Applications(BCA)',
@@ -124,7 +163,7 @@ export default function App() {
       DEBuniqueID: '',
       ABCID: '',
       studentName: '',
-      UniversityName: 'Saveetha Institute of Medical and Technical Sciences',
+      UniversityName: '',
       EnrollmentNumber: '',
       ModeEducation: 'Online(OL)',
       CourseName: 'Bachelor of Computer Applications(BCA)',
@@ -157,37 +196,59 @@ export default function App() {
           setCurrentUser(user);
           showToast(`Welcome back, ${user.fullName || user.username}! Administrator access granted.`, 'success');
         }}
+        marbleOn={marbleOn}
+        setMarbleOn={setMarbleOn}
       />
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 font-sans">
+    <div className="min-h-screen flex flex-col font-sans text-slate-800">
       {/* Toast Alert Notification (With 12s timeout and manual Close button) */}
       {toast && (
-        <div className="fixed bottom-6 right-6 z-50 animate-bounce max-w-md w-full">
-          <div className={`p-4 rounded-2xl shadow-2xl border flex items-start justify-between gap-3 text-xs font-semibold backdrop-blur-xl ${
-            toast.type === 'success'
-              ? 'bg-emerald-950/95 text-emerald-200 border-emerald-500/50 shadow-emerald-500/20'
-              : 'bg-rose-950/95 text-rose-200 border-rose-500/50 shadow-rose-500/20'
-          }`}>
+        <div className="fixed bottom-6 right-6 z-50 animate-bounce max-w-md w-full px-4">
+          <div className={`p-4 rounded-2xl shadow-2xl border flex items-start justify-between gap-3 text-xs font-semibold backdrop-blur-xl ${toast.type === 'success'
+            ? 'bg-white/95 text-emerald-950 border-emerald-300 shadow-emerald-500/10'
+            : toast.type === 'warning'
+              ? 'bg-white/95 text-amber-950 border-amber-300 shadow-amber-500/10'
+              : toast.type === 'info'
+                ? 'bg-white/95 text-blue-950 border-blue-300 shadow-blue-500/10'
+                : 'bg-white/95 text-rose-950 border-rose-300 shadow-rose-500/10'
+            }`}>
             <div className="flex items-start gap-2.5">
               {toast.type === 'success' ? (
-                <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+              ) : toast.type === 'warning' ? (
+                <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+              ) : toast.type === 'info' ? (
+                <Info className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
               ) : (
-                <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
+                <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
               )}
               <div>
-                <div className="font-bold uppercase tracking-wider text-[11px] mb-0.5">
-                  {toast.type === 'success' ? 'Success Notification' : 'Validation / API Error'}
+                <div className={`font-bold uppercase tracking-wider text-[11px] mb-0.5 ${toast.type === 'success'
+                  ? 'text-emerald-700'
+                  : toast.type === 'warning'
+                    ? 'text-amber-700'
+                    : toast.type === 'info'
+                      ? 'text-blue-700'
+                      : 'text-rose-700'
+                  }`}>
+                  {toast.type === 'success'
+                    ? 'Success Notification'
+                    : toast.type === 'warning'
+                      ? 'Stage Notice / Warning'
+                      : toast.type === 'info'
+                        ? 'Information'
+                        : 'Validation / API Error'}
                 </div>
-                <div className="leading-relaxed">{toast.message}</div>
+                <div className="leading-relaxed text-slate-700">{toast.message}</div>
               </div>
             </div>
 
             <button
               onClick={() => setToast(null)}
-              className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white shrink-0 transition-colors"
+              className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 shrink-0 transition-colors cursor-pointer"
               title="Close Notification"
             >
               <X className="w-4 h-4" />
@@ -207,20 +268,21 @@ export default function App() {
       />
 
       {/* Content Body */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-8">
+      <main className={`flex-1 w-full mx-auto px-4 lg:px-8 py-6 transition-all ${activeTab === 'database' ? 'max-w-[98vw]' : 'max-w-7xl'
+        }`}>
         {/* Error Banner inside active view if present */}
         {errorMessage && activeTab === 'flow' && (
-          <div className="max-w-3xl mx-auto mb-6 p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-start justify-between gap-3 animate-fade-in shadow-xl">
+          <div className="max-w-3xl mx-auto mb-6 p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 text-xs flex items-start justify-between gap-3 animate-fade-in shadow-sm">
             <div className="flex items-start gap-3">
-              <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
+              <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
               <div>
-                <h4 className="font-bold text-sm text-rose-200">API Response Warning</h4>
-                <p className="mt-1 leading-relaxed">{errorMessage}</p>
+                <h4 className="font-bold text-sm text-rose-800">API Response Warning</h4>
+                <p className="mt-1 leading-relaxed text-rose-700">{errorMessage}</p>
               </div>
             </div>
             <button
               onClick={() => setErrorMessage(null)}
-              className="text-rose-400 hover:text-rose-200 text-xs font-bold"
+              className="text-rose-700 hover:text-rose-900 text-xs font-bold cursor-pointer"
             >
               Dismiss
             </button>
@@ -231,107 +293,112 @@ export default function App() {
         {activeTab === 'flow' && (
           <div className="space-y-6">
             {/* Interactive Step Progress Bar (Click any stage to navigate back/forward) */}
-            <div className="max-w-3xl mx-auto bg-slate-900/80 p-2 rounded-2xl border border-slate-800 flex flex-wrap items-center justify-between gap-2 shadow-xl mb-6">
+            <div className="max-w-3xl mx-auto bg-white/85 backdrop-blur-md p-1.5 rounded-full border border-amber-200/60 flex flex-wrap items-center justify-between gap-1 shadow-xs mb-6">
               {/* Step 1 */}
               <button
                 type="button"
-                onClick={() => setFlowStage('search')}
-                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                  flowStage === 'search'
-                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
-                }`}
+                onClick={() => {
+                  if (flowStage === 'success') resetFlow();
+                  else setFlowStage('search');
+                }}
+                className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${flowStage === 'search'
+                  ? 'bg-[#FDF3DE] text-[#9A3412] font-bold shadow-xs border border-amber-300/80'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white'
+                  }`}
               >
-                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${
-                  flowStage === 'search' ? 'bg-white text-indigo-600 font-bold' : 'bg-slate-800 text-slate-400'
-                }`}>
+                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${flowStage === 'search' ? 'bg-[#9A3412] text-white' : 'bg-slate-100 text-slate-500'
+                  }`}>
                   1
                 </span>
                 <span>DEB Lookup</span>
               </button>
 
-              <span className="text-slate-600 hidden sm:inline">&rarr;</span>
+              <span className="text-amber-200 hidden sm:inline">&rarr;</span>
 
               {/* Step 2 */}
               <button
                 type="button"
                 onClick={() => {
-                  if (studentProfile) setFlowStage('profile');
-                  else showToast('Please fetch a DEB Unique ID first in Stage 1.', 'error');
+                  if (flowStage === 'success') {
+                    showToast("Admission already completed. Click 'Process Next Admission' to start a new entry.", 'info');
+                  } else if (studentProfile) {
+                    setFlowStage('profile');
+                  } else {
+                    showToast('Please fetch a DEB Unique ID first in Stage 1.', 'warning');
+                  }
                 }}
-                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                  flowStage === 'profile'
-                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
-                    : studentProfile
-                    ? 'text-indigo-300 hover:text-white hover:bg-slate-800'
-                    : 'text-slate-600 hover:text-slate-400'
-                }`}
+                className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${flowStage === 'profile'
+                  ? 'bg-[#FDF3DE] text-[#9A3412] font-bold shadow-xs border border-amber-300/80'
+                  : studentProfile
+                    ? 'text-amber-900 hover:bg-amber-50'
+                    : 'text-slate-400 hover:text-slate-600'
+                  }`}
               >
-                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${
-                  flowStage === 'profile'
-                    ? 'bg-white text-indigo-600 font-bold'
-                    : studentProfile
-                    ? 'bg-indigo-500/30 text-indigo-300'
-                    : 'bg-slate-800 text-slate-600'
-                }`}>
+                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${flowStage === 'profile'
+                  ? 'bg-[#9A3412] text-white'
+                  : studentProfile
+                    ? 'bg-amber-100 text-amber-800'
+                    : 'bg-slate-100 text-slate-400'
+                  }`}>
                   2
                 </span>
                 <span>Profile Review</span>
               </button>
 
-              <span className="text-slate-600 hidden sm:inline">&rarr;</span>
+              <span className="text-amber-200 hidden sm:inline">&rarr;</span>
 
               {/* Step 3 */}
               <button
                 type="button"
                 onClick={() => {
-                  if (studentProfile || debId) setFlowStage('form');
-                  else showToast('Please enter/fetch student details first.', 'error');
+                  if (flowStage === 'success') {
+                    showToast("Admission already completed. Click 'Process Next Admission' to start a new entry.", 'info');
+                  } else if (studentProfile || debId) {
+                    setFlowStage('form');
+                  } else {
+                    showToast('Please fetch a DEB Unique ID first in Stage 1.', 'warning');
+                  }
                 }}
-                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                  flowStage === 'form'
-                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
-                    : (studentProfile || debId)
-                    ? 'text-indigo-300 hover:text-white hover:bg-slate-800'
-                    : 'text-slate-600 hover:text-slate-400'
-                }`}
+                className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${flowStage === 'form'
+                  ? 'bg-[#FDF3DE] text-[#9A3412] font-bold shadow-xs border border-amber-300/80'
+                  : (studentProfile || debId)
+                    ? 'text-amber-900 hover:bg-amber-50'
+                    : 'text-slate-400 hover:text-slate-600'
+                  }`}
               >
-                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${
-                  flowStage === 'form'
-                    ? 'bg-white text-indigo-600 font-bold'
-                    : (studentProfile || debId)
-                    ? 'bg-indigo-500/30 text-indigo-300'
-                    : 'bg-slate-800 text-slate-600'
-                }`}>
+                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${flowStage === 'form'
+                  ? 'bg-[#9A3412] text-white'
+                  : (studentProfile || debId)
+                    ? 'bg-amber-100 text-amber-800'
+                    : 'bg-slate-100 text-slate-400'
+                  }`}>
                   3
                 </span>
                 <span>Admission Form</span>
               </button>
 
-              <span className="text-slate-600 hidden sm:inline">&rarr;</span>
+              <span className="text-amber-200 hidden sm:inline">&rarr;</span>
 
               {/* Step 4 */}
               <button
                 type="button"
                 onClick={() => {
                   if (lastSubmission) setFlowStage('success');
-                  else showToast('No submission completed yet. Fill Stage 3 to submit.', 'error');
+                  else showToast('Please complete Stage 3 to submit admission details first.', 'warning');
                 }}
-                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                  flowStage === 'success'
-                    ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/30'
-                    : lastSubmission
-                    ? 'text-emerald-300 hover:text-white hover:bg-slate-800'
-                    : 'text-slate-600 hover:text-slate-400'
-                }`}
+                className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${flowStage === 'success'
+                  ? 'bg-emerald-600 text-white shadow-xs font-bold'
+                  : lastSubmission
+                    ? 'text-emerald-700 hover:text-emerald-900 hover:bg-emerald-50'
+                    : 'text-slate-400 hover:text-slate-600'
+                  }`}
               >
-                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${
-                  flowStage === 'success'
-                    ? 'bg-white text-emerald-600 font-bold'
-                    : lastSubmission
-                    ? 'bg-emerald-500/30 text-emerald-300'
-                    : 'bg-slate-800 text-slate-600'
-                }`}>
+                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${flowStage === 'success'
+                  ? 'bg-white text-emerald-600'
+                  : lastSubmission
+                    ? 'bg-emerald-100 text-emerald-800'
+                    : 'bg-slate-100 text-slate-400'
+                  }`}>
                   4
                 </span>
                 <span>Complete</span>
@@ -376,47 +443,33 @@ export default function App() {
 
             {/* Stage 4: Submission Confirmation */}
             {flowStage === 'success' && lastSubmission && (
-              <div className="glass-panel rounded-2xl p-8 max-w-2xl mx-auto border border-emerald-500/30 text-center space-y-6 animate-fade-in">
-                <div className="w-16 h-16 rounded-full bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-400 mx-auto">
+              <div className="bg-white/90 backdrop-blur-md rounded-3xl p-8 sm:p-10 max-w-2xl mx-auto border border-emerald-200 text-center space-y-6 shadow-2xl animate-fade-in">
+                <div className="w-16 h-16 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 mx-auto shadow-sm">
                   <CheckCircle2 className="w-8 h-8" />
                 </div>
 
                 <div>
-                  <h3 className="text-2xl font-bold text-white font-heading">
+                  <h3 className="text-2xl font-bold text-slate-900 font-heading">
                     Admission Submitted & Saved!
                   </h3>
-                  <p className="text-xs text-slate-300 mt-1">
-                    Student admission record <strong className="text-indigo-300">#{lastSubmission.admission_id || lastSubmission.db_record_id}</strong> has been stored in MySQL and pushed to UGC API.
+                  <p className="text-xs text-slate-600 mt-1">
+                    Student admission record <strong className="text-blue-700 font-bold">#{lastSubmission.admission_id || lastSubmission.db_record_id}</strong> has been stored in MySQL and pushed to UGC API.
                   </p>
                 </div>
 
-                {/* Multi-action Back & Next Buttons */}
+                {/* Final Actions (Only View Admissions Database & Process Next Admission) */}
                 <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
                   <button
-                    onClick={() => setFlowStage('form')}
-                    className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 hover:text-white flex items-center justify-center gap-2 border border-slate-700 cursor-pointer transition-all"
-                  >
-                    <span>&larr; Back to Stage 3 (Form)</span>
-                  </button>
-
-                  <button
-                    onClick={() => setFlowStage('profile')}
-                    className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 hover:text-white flex items-center justify-center gap-2 border border-slate-700 cursor-pointer transition-all"
-                  >
-                    <span>&larr; Back to Stage 2 (Profile)</span>
-                  </button>
-
-                  <button
                     onClick={() => setActiveTab('database')}
-                    className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-indigo-300 hover:text-white flex items-center justify-center gap-2 border border-slate-700 cursor-pointer transition-all"
+                    className="px-6 py-3 rounded-full bg-blue-50 hover:bg-blue-100 text-xs font-semibold text-blue-800 flex items-center justify-center gap-2 border border-blue-200 cursor-pointer transition-all shadow-xs"
                   >
-                    <Database className="w-4 h-4 text-indigo-400" />
+                    <Database className="w-4 h-4 text-blue-600" />
                     <span>View Admissions Database</span>
                   </button>
 
                   <button
                     onClick={resetFlow}
-                    className="gradient-btn px-6 py-2.5 rounded-xl text-xs font-bold text-white flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/30 cursor-pointer"
+                    className="gradient-btn px-7 py-3 rounded-full text-xs font-bold text-white flex items-center justify-center gap-2 shadow-lg shadow-blue-600/30 cursor-pointer"
                   >
                     <RotateCcw className="w-4 h-4" />
                     <span>Process Next Admission</span>
@@ -440,6 +493,25 @@ export default function App() {
           />
         )}
       </main>
+
+      {/* Minimal Marble Background Toggle (Default: OFF / #FDF3DE Plain, ON: Marble) */}
+      <div className="fixed bottom-5 left-5 z-40 animate-fade-in">
+        <button
+          type="button"
+          onClick={() => setMarbleOn(!marbleOn)}
+          className="bg-white/95 backdrop-blur-md px-3.5 py-2 rounded-full border border-amber-200/90 shadow-lg flex items-center gap-2.5 text-xs font-semibold text-slate-700 hover:text-slate-900 cursor-pointer transition-all hover:scale-105 active:scale-95"
+          title="Toggle Marble Background (Default: Plain #FDF3DE)"
+        >
+          <div className={`w-8 h-4.5 flex items-center rounded-full p-0.5 transition-colors duration-200 ${marbleOn ? 'bg-amber-600' : 'bg-slate-300'
+            }`}>
+            <div className={`bg-white w-3.5 h-3.5 rounded-full shadow-md transform transition-transform duration-200 ${marbleOn ? 'translate-x-3.5' : 'translate-x-0'
+              }`} />
+          </div>
+          <span className={`text-[10px] font-bold uppercase ${marbleOn ? 'text-amber-700' : 'text-slate-400'}`}>
+            {marbleOn ? 'ON' : 'OFF'}
+          </span>
+        </button>
+      </div>
     </div>
   );
 }
