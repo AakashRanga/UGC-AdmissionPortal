@@ -1,20 +1,33 @@
-https://share.gemini.google/ySwSRuQgZqo1
+the UGC DEB API server received your request, but rejected/refused your authentication key (APIKey). Notice that the "Message" in the response echoes back your exact APIKey.
 
-UGC is asking to create admission process to be connected through api refer this three documents mentioned below, I want you to build a website for this process, this is very important site so carefully understand the process and build it
-1. DEB Unique ID API Guide - Copy (7) (1).docx
-2. Format of the student admission data.docx
-3. Name of Countries to be asked from students while taking admission.docx
+Here is why UGC returns "Status": "Process Refused" and how to resolve it:
 
-Build a react template to fetch details using DEB ID
-   ↓
-Make use of API to fetch Deb Id from UGC with respective api and URL Endpoint
-   ↓
-Next bring out those data in new admission form dynamically 
-   ↓
-Let admission incharge fill needed details and send back push the admission data through reverse API
-   ↓
-Design database mapping for admission also need to save in our DB
-   ↓
-Our Api is not confirmed yet so keep two modes first for testing in our local to check admission details is saved for that dummy debid locally and admission details saving in DB for online let it work with realtime implementation
-   ↓
-Test complete admission flow
+1. IP Whitelisting Restriction (Most Common Cause)
+The UGC DEB portal API enforces server-side IP whitelisting:
+
+When UGC issues API keys to a University / HEI, they link the key to the static public IP address of the university's registered server.
+If you call the API from your local machine / laptop, home broadband, or any server IP that is not whitelisted in UGC's portal for your HEI, UGC's server refuses the connection and returns "Status": "Process Refused".
+Solution:
+
+Test from the official server IP that was submitted to UGC when applying for API access.
+Or request the UGC DEB technical team to whitelist your development server's public static IP.
+2. The API Key is Inactive, Unapproved, or Expired
+If the HEI credentials were newly generated or re-generated in the UGC portal, the key may still be pending activation or has expired.
+Solution: Verify in the UGC DEB HEI Admin portal that the API status is marked Active/Approved.
+3. Endpoint URL (Direct IP vs Domain)
+According to the official UGC DEB documentation (deb_api_guide.txt), UGC routes internal API calls through their designated server IP path:
+
+Direct IP path in UGC Guide:
+http://45.124.184.101/deb.ugc.ac.in/api/DebUniqueID/GetStudentDetails?DEBUniqueID=<your_deb_id>
+Domain path:
+http://deb.ugc.ac.in/api/DebUniqueID/GetStudentDetails?DEBUniqueID=<your_deb_id>
+In 
+
+backend/.env
+, you can test changing UGC_FETCH_STUDENT_URL to http://45.124.184.101/deb.ugc.ac.in/api/DebUniqueID/GetStudentDetails if your whitelisted server connects over direct IP.
+
+4. Query Parameter Name (DEBUniqueID vs PROGRAMCODE)
+In some versions of UGC's .NET API backend:
+
+The parameter is expected as ?DEBUniqueID=...
+In other older internal ASP.NET controllers, it was mapped to ?PROGRAMCODE=...

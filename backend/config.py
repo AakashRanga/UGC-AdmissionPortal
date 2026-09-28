@@ -5,12 +5,12 @@ env_path = os.path.join(os.path.dirname(__file__), ".env")
 
 class Settings(BaseSettings):
     # 1. UGC API for Fetching Student Details
-    UGC_FETCH_STUDENT_URL: str = "http://deb.ugc.ac.in/api/DebUniqueID/GetStudentDetails"
+    UGC_FETCH_STUDENT_URL: str = "https://deb.ugc.ac.in/api/DebUniqueID/GetStudentDetails"
     UGC_FETCH_STUDENT_CLIENT_ID: str = ""
     UGC_FETCH_STUDENT_API_KEY: str = ""
 
     # 2. UGC API for Sharing Admission Details (Reverse Push)
-    UGC_SUBMIT_ADMISSION_URL: str = "http://deb.ugc.ac.in/api/DebUniqueID/GetAdmissionDetails"
+    UGC_SUBMIT_ADMISSION_URL: str = "https://deb.ugc.ac.in/api/DebUniqueID/GetAdmissionDetails"
     UGC_SUBMIT_ADMISSION_CLIENT_ID: str = ""
     UGC_SUBMIT_ADMISSION_API_KEY: str = ""
 

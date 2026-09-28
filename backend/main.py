@@ -224,7 +224,19 @@ def normalize_ugc_student_response(resp_json: dict) -> dict:
         name = target.get("studentName") or target.get("stdname") or target.get("StudentName") or target.get("Name") or ""
         gender = target.get("gender") or target.get("Gender") or ""
         dob = target.get("dob") or target.get("DOB") or ""
-        abc_id = target.get("abcId") or target.get("ABCID") or target.get("StudentID") or target.get("studentId") or ""
+        abc_id = (
+            target.get("abcId")
+            or target.get("ABCID")
+            or target.get("abc_id")
+            or target.get("abcID")
+            or target.get("AbcId")
+            or target.get("ABC_ID")
+            or target.get("StudentID")
+            or target.get("studentId")
+            or target.get("abc")
+            or target.get("AbcID")
+            or ""
+        )
         univ = target.get("universityName") or target.get("UniversityName") or settings.DEFAULT_HEI_CODE
 
         # Must have actual student fields (name, dob, gender, or abc_id)

@@ -86,6 +86,19 @@ export default function App() {
     if (res.status === 'success' && res.data) {
       setStudentProfile(res.data);
       setLatency(res.latency);
+
+      const fetchedAbcId = res.data.abcId || res.data.ABCID || res.data.abc_id || res.data.StudentID || res.data.studentId || '';
+      const fetchedStudentName = res.data.studentName || res.data.stdname || res.data.StudentName || '';
+      const fetchedUniversityName = res.data.universityName || res.data.UniversityName || '';
+
+      setFormData(prev => ({
+        ...prev,
+        DEBuniqueID: targetId,
+        ABCID: fetchedAbcId || prev.ABCID || '',
+        studentName: fetchedStudentName || prev.studentName,
+        UniversityName: fetchedUniversityName || prev.UniversityName || ''
+      }));
+
       setFlowStage('profile');
       showToast(`Student profile retrieved successfully for DEB ID ${targetId}`, 'success');
     } else {
@@ -420,7 +433,6 @@ export default function App() {
             {flowStage === 'profile' && studentProfile && (
               <StudentProfileCard
                 studentData={studentProfile}
-                latency={latency}
                 onProceed={() => setFlowStage('form')}
                 onBack={() => setFlowStage('search')}
               />

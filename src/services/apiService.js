@@ -82,7 +82,7 @@ export const apiService = {
     return {
       status: "offline",
       app_mode: "ONLINE",
-      ugc_base_url: "http://deb.ugc.ac.in/api/DebUniqueID"
+      ugc_base_url: "https://deb.ugc.ac.in/api/DebUniqueID"
     };
   },
 

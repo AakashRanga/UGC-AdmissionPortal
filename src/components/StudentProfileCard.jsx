@@ -1,7 +1,7 @@
 import React from 'react';
-import { User, Calendar, Clock, CheckCircle, ArrowRight, ArrowLeft } from 'lucide-react';
+import { User, Calendar, CheckCircle, ArrowRight, ArrowLeft } from 'lucide-react';
 
-export function StudentProfileCard({ studentData, latency, onProceed, onBack }) {
+export function StudentProfileCard({ studentData, onProceed, onBack }) {
   if (!studentData) return null;
 
   return (
@@ -27,17 +27,10 @@ export function StudentProfileCard({ studentData, latency, onProceed, onBack }) 
             </p>
           </div>
         </div>
-
-        {latency && (
-          <div className="flex items-center gap-1.5 text-xs text-slate-600 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200 self-start sm:self-center">
-            <Clock className="w-3.5 h-3.5 text-blue-600" />
-            <span>Response Latency: <strong className="text-blue-700 font-bold">{latency} ms</strong></span>
-          </div>
-        )}
       </div>
 
-      {/* Grid Details - Exact 4 fields specified in UGC DOCX Section 5 */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-5">
+      {/* Grid Details - Exact fields specified in UGC Portal */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-5">
         {/* Student Name */}
         <div className="glass-card p-4 rounded-xl bg-white/85 border border-amber-100/90 shadow-2xs">
           <div className="flex items-center gap-2 text-slate-500 text-xs mb-1.5">
@@ -47,7 +40,7 @@ export function StudentProfileCard({ studentData, latency, onProceed, onBack }) 
             <span>Student Name</span>
           </div>
           <p className="text-sm font-bold text-slate-900 truncate">
-            {studentData.studentName || 'N/A'}
+            {studentData.studentName || studentData.stdname || studentData.StudentName || 'N/A'}
           </p>
         </div>
 
@@ -60,7 +53,7 @@ export function StudentProfileCard({ studentData, latency, onProceed, onBack }) 
             <span>Gender</span>
           </div>
           <p className="text-sm font-bold text-slate-900">
-            {studentData.gender || 'N/A'}
+            {studentData.gender || studentData.Gender || 'N/A'}
           </p>
         </div>
 
@@ -73,7 +66,20 @@ export function StudentProfileCard({ studentData, latency, onProceed, onBack }) 
             <span>Date of Birth</span>
           </div>
           <p className="text-sm font-bold font-mono text-slate-900">
-            {studentData.dob || 'N/A'}
+            {studentData.dob || studentData.DOB || 'N/A'}
+          </p>
+        </div>
+
+        {/* Academic Bank of Credits (ABC ID) */}
+        <div className="glass-card p-4 rounded-xl bg-white/85 border border-amber-100/90 shadow-2xs">
+          <div className="flex items-center gap-2 text-slate-500 text-xs mb-1.5">
+            <div className="w-6 h-6 rounded-lg bg-purple-50 flex items-center justify-center text-purple-700 shrink-0">
+              <CheckCircle className="w-3.5 h-3.5" />
+            </div>
+            <span>ABC ID (Credits)</span>
+          </div>
+          <p className="text-sm font-bold font-mono text-purple-800 truncate">
+            {studentData.abcId || studentData.ABCID || studentData.abc_id || studentData.StudentID || studentData.studentId || 'Not Linked'}
           </p>
         </div>
       </div>

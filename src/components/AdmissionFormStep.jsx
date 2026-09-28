@@ -25,7 +25,7 @@ export function AdmissionFormStep({
 
   const [internalFormData, setInternalFormData] = useState({
     DEBuniqueID: debId || '',
-    ABCID: '',
+    ABCID: (studentData && (studentData.abcId || studentData.ABCID || studentData.abc_id || studentData.StudentID || studentData.studentId)) || '',
     studentName: (studentData && (studentData.studentName || studentData.stdname || studentData.StudentName)) || '',
     UniversityName: (studentData && (studentData.universityName || studentData.UniversityName)) || '',
     EnrollmentNumber: '',
@@ -49,9 +49,11 @@ export function AdmissionFormStep({
 
   useEffect(() => {
     if (debId || studentData) {
+      const fetchedAbc = studentData?.abcId || studentData?.ABCID || studentData?.abc_id || studentData?.StudentID || studentData?.studentId || '';
       setFormData(prev => ({
         ...prev,
         DEBuniqueID: debId || prev.DEBuniqueID,
+        ABCID: fetchedAbc || prev.ABCID || '',
         studentName: studentData?.studentName || studentData?.stdname || studentData?.StudentName || prev.studentName,
         UniversityName: studentData?.universityName || studentData?.UniversityName || prev.UniversityName || ''
       }));
@@ -199,7 +201,7 @@ export function AdmissionFormStep({
             <span className="text-[10px] bg-emerald-200/60 px-2 py-0.5 rounded text-emerald-900 font-bold">Verified</span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
             {/* Student Name */}
             <div className="bg-white p-3 rounded-lg border border-emerald-100 shadow-sm">
               <div className="text-slate-500 text-[11px] flex items-center gap-1.5 mb-1">
@@ -230,6 +232,17 @@ export function AdmissionFormStep({
               </div>
               <div className="font-bold font-mono text-slate-900">
                 {studentData.dob || studentData.DOB || 'N/A'}
+              </div>
+            </div>
+
+            {/* ABC ID */}
+            <div className="bg-white p-3 rounded-lg border border-purple-100 shadow-sm">
+              <div className="text-slate-500 text-[11px] flex items-center gap-1.5 mb-1">
+                <CheckCircle className="w-3.5 h-3.5 text-purple-600" />
+                ABC ID (abcId)
+              </div>
+              <div className="font-bold font-mono text-purple-800 truncate">
+                {studentData.abcId || studentData.ABCID || studentData.abc_id || studentData.StudentID || studentData.studentId || 'Not Linked'}
               </div>
             </div>
           </div>
