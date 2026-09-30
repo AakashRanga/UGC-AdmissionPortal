@@ -742,3 +742,9 @@ async def submit_admission(req: AdmissionSubmissionRequest, db: Session = Depend
         db.rollback()
         logger.error(f"MySQL Insert Failed: {db_err}")
         raise HTTPException(status_code=500, detail=f"Database Save Error: {str(db_err)}")
+
+if __name__ == "__main__":
+    import uvicorn
+    logger.info(f"Starting server on port {settings.BACKEND_PORT} (configured in backend/.env)...")
+    uvicorn.run("backend.main:app", host="0.0.0.0", port=settings.BACKEND_PORT, reload=True)
+

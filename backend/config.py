@@ -27,6 +27,10 @@ class Settings(BaseSettings):
     # System Mode: 'LOCAL' or 'ONLINE'
     APP_MODE: str = "ONLINE"
 
+    # Common Port Configuration
+    FRONTEND_PORT: int = 8192
+    BACKEND_PORT: int = 8191
+
     class Config:
         env_file = env_path
         env_file_encoding = "utf-8"
