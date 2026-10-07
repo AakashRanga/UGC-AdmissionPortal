@@ -206,7 +206,7 @@ export function AdmissionFormStep({
             <div className="bg-white p-3 rounded-lg border border-emerald-100 shadow-sm">
               <div className="text-slate-500 text-[11px] flex items-center gap-1.5 mb-1">
                 <User className="w-3.5 h-3.5 text-blue-600" />
-                Student Name (studentName)
+                Student Name
               </div>
               <div className="font-bold text-slate-900 truncate">
                 {studentData.studentName || studentData.stdname || studentData.StudentName || 'N/A'}
@@ -217,7 +217,7 @@ export function AdmissionFormStep({
             <div className="bg-white p-3 rounded-lg border border-emerald-100 shadow-sm">
               <div className="text-slate-500 text-[11px] flex items-center gap-1.5 mb-1">
                 <User className="w-3.5 h-3.5 text-sky-600" />
-                Gender (gender)
+                Gender
               </div>
               <div className="font-bold text-slate-900">
                 {studentData.gender || studentData.Gender || 'N/A'}
@@ -228,7 +228,7 @@ export function AdmissionFormStep({
             <div className="bg-white p-3 rounded-lg border border-emerald-100 shadow-sm">
               <div className="text-slate-500 text-[11px] flex items-center gap-1.5 mb-1">
                 <Calendar className="w-3.5 h-3.5 text-amber-600" />
-                Date of Birth (dob)
+                Date of Birth
               </div>
               <div className="font-bold font-mono text-slate-900">
                 {studentData.dob || studentData.DOB || 'N/A'}
@@ -239,7 +239,7 @@ export function AdmissionFormStep({
             <div className="bg-white p-3 rounded-lg border border-purple-100 shadow-sm">
               <div className="text-slate-500 text-[11px] flex items-center gap-1.5 mb-1">
                 <CheckCircle className="w-3.5 h-3.5 text-purple-600" />
-                ABC ID (abcId)
+                ABC ID
               </div>
               <div className="font-bold font-mono text-purple-800 truncate">
                 {studentData.abcId || studentData.ABCID || studentData.abc_id || studentData.StudentID || studentData.studentId || 'Not Linked'}
@@ -314,7 +314,7 @@ export function AdmissionFormStep({
             {/* Name of HEI (AISHE Code) */}
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                Name of HEI (AISHE Code U-XXXX) <span className="text-rose-500">*</span>
+                Name of HEI(AISHE Code U-XXXX)<span className="text-rose-500">*</span>
               </label>
               <input
                 type="text"

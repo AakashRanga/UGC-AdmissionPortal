@@ -65,7 +65,7 @@ export function FlowTester({ isOpen, onClose, mode, heiCode, apiKey }) {
       UniversityName: heiCode || 'U-0475',
       EnrollmentNumber: `ENR-TEST-${Math.floor(1000 + Math.random() * 9000)}`,
       ModeEducation: 'Online(OL)',
-      CourseName: 'Bachelor of Computer Applications (BCA)',
+      CourseName: 'BACHELOR OF COMMERCE (GENERAL)',
       AdmissionDate: new Date().toISOString().split('T')[0],
       Category: 'General',
       GovernmentIdentifier: 'Passport',
