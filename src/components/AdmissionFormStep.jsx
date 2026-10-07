@@ -27,7 +27,7 @@ export function AdmissionFormStep({
     DEBuniqueID: debId || '',
     ABCID: (studentData && (studentData.abcId || studentData.ABCID || studentData.abc_id || studentData.StudentID || studentData.studentId)) || '',
     studentName: (studentData && (studentData.studentName || studentData.stdname || studentData.StudentName)) || '',
-    UniversityName: (studentData && (studentData.universityName || studentData.UniversityName)) || '',
+    UniversityName: (studentData && (studentData.universityName || studentData.UniversityName)) || 'U-0475',
     EnrollmentNumber: '',
     ModeEducation: 'Online(OL)',
     CourseName: DEB_RECOGNIZED_COURSES[0],
@@ -55,7 +55,7 @@ export function AdmissionFormStep({
         DEBuniqueID: debId || prev.DEBuniqueID,
         ABCID: fetchedAbc || prev.ABCID || '',
         studentName: studentData?.studentName || studentData?.stdname || studentData?.StudentName || prev.studentName,
-        UniversityName: studentData?.universityName || studentData?.UniversityName || prev.UniversityName || ''
+        UniversityName: studentData?.universityName || studentData?.UniversityName || prev.UniversityName || 'U-0475'
       }));
     }
   }, [debId, studentData]);
@@ -320,7 +320,7 @@ export function AdmissionFormStep({
                 type="text"
                 value={formData.UniversityName}
                 onChange={(e) => handleChange('UniversityName', e.target.value)}
-                placeholder="Enter AISHE Code or Name (e.g. U-0421)"
+                placeholder="Enter AISHE Code or Name (e.g. U-0475)"
                 className="w-full px-3.5 py-2.5 rounded-xl glass-input text-xs font-medium text-slate-900"
                 required
               />

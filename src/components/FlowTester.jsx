@@ -62,7 +62,7 @@ export function FlowTester({ isOpen, onClose, mode, heiCode, apiKey }) {
     const testPayload = {
       DEBuniqueID: '987654321987',
       ABCID: fetchedStudent?.abcId || 'ABC98765432101',
-      UniversityName: heiCode || 'U-0421',
+      UniversityName: heiCode || 'U-0475',
       EnrollmentNumber: `ENR-TEST-${Math.floor(1000 + Math.random() * 9000)}`,
       ModeEducation: 'Online(OL)',
       CourseName: 'Bachelor of Computer Applications (BCA)',

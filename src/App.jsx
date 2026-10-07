@@ -96,7 +96,7 @@ export default function App() {
         DEBuniqueID: targetId,
         ABCID: fetchedAbcId || prev.ABCID || '',
         studentName: fetchedStudentName || prev.studentName,
-        UniversityName: fetchedUniversityName || prev.UniversityName || ''
+        UniversityName: fetchedUniversityName || prev.UniversityName || 'U-0475'
       }));
 
       setFlowStage('profile');
@@ -125,7 +125,7 @@ export default function App() {
         DEBuniqueID: '',
         ABCID: '',
         studentName: '',
-        UniversityName: '',
+        UniversityName: 'U-0475',
         EnrollmentNumber: '',
         ModeEducation: 'Online(OL)',
         CourseName: 'Bachelor of Computer Applications(BCA)',
@@ -153,7 +153,7 @@ export default function App() {
     DEBuniqueID: '',
     ABCID: '',
     studentName: '',
-    UniversityName: '',
+    UniversityName: 'U-0475',
     EnrollmentNumber: '',
     ModeEducation: 'Online(OL)',
     CourseName: 'Bachelor of Computer Applications(BCA)',
@@ -176,7 +176,7 @@ export default function App() {
       DEBuniqueID: '',
       ABCID: '',
       studentName: '',
-      UniversityName: '',
+      UniversityName: 'U-0475',
       EnrollmentNumber: '',
       ModeEducation: 'Online(OL)',
       CourseName: 'Bachelor of Computer Applications(BCA)',
