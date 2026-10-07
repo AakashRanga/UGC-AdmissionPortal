@@ -588,7 +588,7 @@ export function AdmissionFormStep({
               </button>
             )}
             <div className="hidden sm:block text-xs text-slate-500 ml-2">
-              Mode: <strong className="text-blue-700">{mode === 'LOCAL' ? 'Local Test Mode' : 'Realtime Online Mode'}</strong>
+              Gateway: <strong className="text-emerald-700 font-bold">UGC DEB Live Online API</strong>
             </div>
           </div>
 

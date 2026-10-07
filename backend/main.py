@@ -129,20 +129,20 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Enable CORS for React Vite Frontend, Live Public IP, and Localhost
+# Enable CORS for React Frontend on Port 80, Live Server IPs, Domains, and Localhost
 origins = [
-    "http://180.235.121.253:8192",
-    "http://180.235.121.253:8191",
-    "http://180.235.121.253",
-    "https://180.235.121.253:8192",
-    "https://180.235.121.253:8191",
-    "https://180.235.121.253",
-    "http://localhost:8192",
-    "http://127.0.0.1:8192",
-    "http://localhost:8191",
-    "http://127.0.0.1:8191",
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
+    "http://180.235.121.244:80",
+    "http://180.235.121.244",
+    "http://172.21.100.161:80",
+    "http://172.21.100.161",
+    "http://online.admission.saveetha.com",
+    "http://online.admission.saveetha.com:80",
+    "http://localhost:80",
+    "http://127.0.0.1:80",
+    "http://localhost:8080",
+    "http://127.0.0.1:8080",
+    "http://localhost",
+    "http://127.0.0.1",
 ]
 
 app.add_middleware(
@@ -152,6 +152,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 def redact_sensitive_keys(text_content: str) -> str:
@@ -527,71 +528,47 @@ async def fetch_student_details(req: StudentFetchRequest, db: Session = Depends(
     if not deb_id:
         raise HTTPException(status_code=400, detail="DEB Unique ID is required.")
 
-    mode = req.mode.upper() if req.mode else "LOCAL"
     api_key = getattr(req, "apiKey", None) or settings.UGC_FETCH_STUDENT_API_KEY
     client_id = getattr(req, "clientId", None) or settings.UGC_FETCH_STUDENT_CLIENT_ID
 
-    logger.info(f"Fetching student details for DEB ID: {deb_id} in {mode} mode.")
+    logger.info(f"Live Online UGC DEB Fetch for DEB ID: {deb_id}")
 
-    if mode == "LOCAL":
-        # LOCAL TEST MODE - Standard test data response
-        data = {
-            "studentName": "Aarav Sharma",
-            "gender": "Male",
-            "dob": "2001-05-15",
-            "universityName": settings.DEFAULT_HEI_CODE,
-            "mobile": "9876543210",
-            "email": "aarav.sharma@example.com",
-            "abcId": "ABC98765432101"
-        }
-        response_payload = {
-            "status": "success",
-            "message": "Student profile fetched successfully (Local Test Mode)",
-            "data": data,
-            "deb_unique_id": deb_id,
-            "mode": "LOCAL"
-        }
-        log_api_call(db, settings.UGC_FETCH_STUDENT_URL, "POST", f"DEBUniqueID={deb_id}", f"APIKey: {api_key}, ClientID: {client_id}", 200, json.dumps(response_payload), "LOCAL")
-        return response_payload
-
-    else:
-        # REALTIME ONLINE MODE - Official Fetch Endpoint Domain
-        target_url = f"{settings.UGC_FETCH_STUDENT_URL}?DEBUniqueID={deb_id}"
-        headers = {
-            "APIKey": api_key,
-            "User-Agent": "UGC-DEB-Admission-Portal/1.0"
-        }
-        if client_id:
-            headers["ClientID"] = client_id
-        
+    target_url = f"{settings.UGC_FETCH_STUDENT_URL}?DEBUniqueID={deb_id}"
+    headers = {
+        "APIKey": api_key,
+        "User-Agent": "UGC-DEB-Admission-Portal/1.0"
+    }
+    if client_id:
+        headers["ClientID"] = client_id
+    
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            resp = await client.post(target_url, headers=headers)
+            
+        status_code = resp.status_code
         try:
-            async with httpx.AsyncClient(timeout=12.0) as client:
-                resp = await client.post(target_url, headers=headers)
-                
-            status_code = resp.status_code
-            try:
-                resp_json = resp.json()
-            except Exception:
-                clean_msg = sanitize_ugc_user_message(resp.text, status_code=status_code)
-                resp_json = {"status": "error", "message": clean_msg}
+            resp_json = resp.json()
+        except Exception:
+            clean_msg = sanitize_ugc_user_message(resp.text, status_code=status_code)
+            resp_json = {"status": "error", "message": clean_msg}
 
-            log_api_call(db, target_url, "POST", f"DEBUniqueID={deb_id}", f"APIKey: {api_key}, ClientID: {client_id}", status_code, json.dumps(resp_json) if isinstance(resp_json, dict) else str(resp_json), "ONLINE")
+        log_api_call(db, target_url, "POST", f"DEBUniqueID={deb_id}", f"APIKey: {api_key}, ClientID: {client_id}", status_code, json.dumps(resp_json) if isinstance(resp_json, dict) else str(resp_json), "ONLINE")
 
-            # Normalize raw UGC response into clear English feedback
-            normalized = normalize_ugc_student_response(resp_json)
-            normalized["deb_unique_id"] = deb_id
-            normalized["mode"] = "ONLINE"
-            return normalized
-        
-        except Exception as err:
-            safe_err = sanitize_ugc_user_message(str(err), status_code=500)
-            error_payload = {
-                "status": "error",
-                "message": f"Connection Notice: Could not reach UGC DEB Portal ({safe_err}).",
-                "details": "Online request to UGC server failed or timed out."
-            }
-            log_api_call(db, target_url, "POST", f"DEBUniqueID={deb_id}", f"APIKey: {api_key}, ClientID: {client_id}", 500, json.dumps(error_payload), "ONLINE")
-            return error_payload
+        # Normalize raw UGC response into clear English feedback
+        normalized = normalize_ugc_student_response(resp_json)
+        normalized["deb_unique_id"] = deb_id
+        normalized["mode"] = "ONLINE"
+        return normalized
+    
+    except Exception as err:
+        safe_err = sanitize_ugc_user_message(str(err), status_code=500)
+        error_payload = {
+            "status": "error",
+            "message": f"Connection Notice: Could not reach UGC DEB Portal ({safe_err}).",
+            "details": "Online request to UGC server failed or timed out."
+        }
+        log_api_call(db, target_url, "POST", f"DEBUniqueID={deb_id}", f"APIKey: {api_key}, ClientID: {client_id}", 500, json.dumps(error_payload), "ONLINE")
+        return error_payload
 
 @app.post("/api/deb/submit-admission")
 async def submit_admission(req: AdmissionSubmissionRequest, db: Session = Depends(get_db)):
@@ -627,7 +604,6 @@ async def submit_admission(req: AdmissionSubmissionRequest, db: Session = Depend
                 detail=f"Database Validation Error: Enrollment Number '{enrollment_clean}' is already assigned in the Admissions Database (Record #{existing_enr.id} for student '{existing_enr.student_name}', DEB ID: {existing_enr.deb_unique_id}). Duplicate enrollment number is not allowed."
             )
 
-    mode = req.mode.upper() if req.mode else "LOCAL"
     api_key = getattr(req, "apiKey", None) or settings.UGC_SUBMIT_ADMISSION_API_KEY
     client_id = getattr(req, "clientId", None) or settings.UGC_SUBMIT_ADMISSION_CLIENT_ID
 
@@ -654,56 +630,44 @@ async def submit_admission(req: AdmissionSubmissionRequest, db: Session = Depend
     raw_ugc_resp = ""
     user_message = ""
 
-    if mode == "LOCAL":
-        simulated_resp = {
-            "status": "Process Success",
-            "message": "Admission data submitted successfully",
-            "details": query_params
-        }
-        raw_ugc_resp = json.dumps(simulated_resp)
-        ugc_status = "UGC_SYNCED"
-        user_message = "Admission details submitted and recorded successfully in Local Test Mode."
-        log_api_call(db, settings.UGC_SUBMIT_ADMISSION_URL, "POST", param_str, f"APIKey: {api_key}, ClientID: {client_id}", 200, raw_ugc_resp, "LOCAL")
+    # Live Realtime Online Reverse Push Endpoint
+    target_url = f"{settings.UGC_SUBMIT_ADMISSION_URL}?{param_str}"
+    headers = {
+        "APIKey": api_key,
+        "User-Agent": "UGC-DEB-Admission-Portal/1.0"
+    }
+    if client_id:
+        headers["ClientID"] = client_id
 
-    else:
-        # REALTIME ONLINE MODE - Official Reverse Push Endpoint Domain
-        target_url = f"{settings.UGC_SUBMIT_ADMISSION_URL}?{param_str}"
-        headers = {
-            "APIKey": api_key,
-            "User-Agent": "UGC-DEB-Admission-Portal/1.0"
-        }
-        if client_id:
-            headers["ClientID"] = client_id
-
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            resp = await client.post(target_url, headers=headers)
+            
+        status_code = resp.status_code
         try:
-            async with httpx.AsyncClient(timeout=15.0) as client:
-                resp = await client.post(target_url, headers=headers)
-                
-            status_code = resp.status_code
-            try:
-                resp_json = resp.json()
-            except Exception:
-                clean_msg = sanitize_ugc_user_message(resp.text, status_code=status_code)
-                resp_json = {"status": "error", "message": clean_msg}
+            resp_json = resp.json()
+        except Exception:
+            clean_msg = sanitize_ugc_user_message(resp.text, status_code=status_code)
+            resp_json = {"status": "error", "message": clean_msg}
 
-            raw_ugc_resp = json.dumps(resp_json) if isinstance(resp_json, dict) else str(resp_json)
-            log_api_call(db, target_url, "POST", param_str, f"APIKey: {api_key}, ClientID: {client_id}", status_code, raw_ugc_resp, "ONLINE")
+        raw_ugc_resp = json.dumps(resp_json) if isinstance(resp_json, dict) else str(resp_json)
+        log_api_call(db, target_url, "POST", param_str, f"APIKey: {api_key}, ClientID: {client_id}", status_code, raw_ugc_resp, "ONLINE")
 
-            if status_code == 200 and isinstance(resp_json, dict) and (str(resp_json.get("status")).lower() == "process success" or str(resp_json.get("Status")).lower() == "process success"):
-                ugc_status = "UGC_SYNCED"
-                user_message = "Admission successfully pushed to UGC DEB Portal and saved in MySQL Database."
-            else:
-                ugc_status = "UGC_FAILED"
-                raw_err = resp_json.get("message") or resp_json.get("Message") or resp_json.get("details") or (resp.text if not isinstance(resp_json, dict) else "Process Refused")
-                safe_err = sanitize_ugc_user_message(str(raw_err), status_code=status_code)
-                user_message = f"UGC Sync Notice: {safe_err} (Admission record saved locally in MySQL DB)."
-        
-        except Exception as err:
-            ugc_status = "UGC_ERROR"
-            safe_err = sanitize_ugc_user_message(str(err), status_code=500)
-            raw_ugc_resp = redact_sensitive_keys(str(err))
-            user_message = f"Saved in MySQL DB. Note: Could not sync with UGC DEB Portal server ({safe_err})."
-            log_api_call(db, target_url, "POST", param_str, f"APIKey: {api_key}, ClientID: {client_id}", 500, raw_ugc_resp, "ONLINE")
+        if status_code == 200 and isinstance(resp_json, dict) and (str(resp_json.get("status")).lower() == "process success" or str(resp_json.get("Status")).lower() == "process success"):
+            ugc_status = "UGC_SYNCED"
+            user_message = "Admission successfully pushed to UGC DEB Portal and saved in MySQL Database."
+        else:
+            ugc_status = "UGC_FAILED"
+            raw_err = resp_json.get("message") or resp_json.get("Message") or resp_json.get("details") or (resp.text if not isinstance(resp_json, dict) else "Process Refused")
+            safe_err = sanitize_ugc_user_message(str(raw_err), status_code=status_code)
+            user_message = f"UGC Sync Notice: {safe_err} (Admission record saved locally in MySQL DB)."
+    
+    except Exception as err:
+        ugc_status = "UGC_ERROR"
+        safe_err = sanitize_ugc_user_message(str(err), status_code=500)
+        raw_ugc_resp = redact_sensitive_keys(str(err))
+        user_message = f"Saved in MySQL DB. Note: Could not sync with UGC DEB Portal server ({safe_err})."
+        log_api_call(db, target_url, "POST", param_str, f"APIKey: {api_key}, ClientID: {client_id}", 500, raw_ugc_resp, "ONLINE")
 
     # Save record to MySQL Database
     try:
@@ -724,7 +688,7 @@ async def submit_admission(req: AdmissionSubmissionRequest, db: Session = Depend
             country_residence=req.CountryResidence,
             sync_status=ugc_status,
             ugc_response=raw_ugc_resp,
-            mode_used=mode
+            mode_used="ONLINE"
         )
         db.add(adm_record)
         db.commit()

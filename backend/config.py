@@ -28,8 +28,8 @@ class Settings(BaseSettings):
     APP_MODE: str = "ONLINE"
 
     # Common Port Configuration
-    FRONTEND_PORT: int = 8192
-    BACKEND_PORT: int = 8191
+    FRONTEND_PORT: int = 80
+    BACKEND_PORT: int = 8080
 
     class Config:
         env_file = env_path

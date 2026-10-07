@@ -6,8 +6,8 @@ import path from 'path'
 
 // Read Port Settings from backend/.env (Single Source of Truth)
 function getEnvPorts() {
-  let frontendPort = 8192
-  let backendPort = 8191
+  let frontendPort = 80
+  let backendPort = 8080
 
   const envPaths = [
     path.resolve(process.cwd(), 'backend', '.env'),
@@ -29,6 +29,14 @@ function getEnvPorts() {
 
 const { frontendPort, backendPort } = getEnvPorts()
 
+const allowedHostsList = [
+  "180.235.121.244",
+  "127.0.0.1",
+  "172.21.100.161",
+  "online.admission.saveetha.com",
+  "localhost"
+]
+
 export default defineConfig({
   plugins: [
     react(),
@@ -38,7 +46,7 @@ export default defineConfig({
     host: '0.0.0.0',
     port: frontendPort,
     strictPort: true,
-    allowedHosts: true,
+    allowedHosts: allowedHostsList,
     proxy: {
       '/api': {
         target: `http://127.0.0.1:${backendPort}`,
@@ -50,7 +58,7 @@ export default defineConfig({
   preview: {
     host: '0.0.0.0',
     port: frontendPort,
-    allowedHosts: true
+    allowedHosts: allowedHostsList
   }
 })
 

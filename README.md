@@ -77,24 +77,28 @@ To run the complete system, you will need **two terminal windows**: one for the 
    MYSQL_PASSWORD=your_password
    MYSQL_DB=ugc_deb_admission
 
-   # Application Mode ('ONLINE' or 'LOCAL')
+   # Application Mode ('ONLINE')
    APP_MODE=ONLINE
+
+   # Common Port Configuration
+   FRONTEND_PORT=80
+   BACKEND_PORT=8080
    ```
 
-5. **Start the FastAPI Backend Server (Port 8191, Host 0.0.0.0)**:
+5. **Start the FastAPI Backend Server (Port 8080, Host 0.0.0.0)**:
    ```bash
-   python -m uvicorn backend.main:app --host 0.0.0.0 --port 8191 --reload
+   python run_backend.py
+   # Or: python -m uvicorn backend.main:app --host 0.0.0.0 --port 8080 --reload
    ```
 
 6. **Verify Backend is Running**:
-   - Local Health Check: [http://localhost:8191/api/health](http://localhost:8191/api/health)
-   - Public IP Health Check: `http://180.235.121.253:8191/api/health`
-   - Interactive Swagger API Docs: [http://localhost:8191/docs](http://localhost:8191/docs)
-   - Alternative ReDoc: [http://localhost:8191/redoc](http://localhost:8191/redoc)
+   - Local Health Check: [http://localhost:8080/api/health](http://localhost:8080/api/health)
+   - Interactive Swagger API Docs: [http://localhost:8080/docs](http://localhost:8080/docs)
+   - Alternative ReDoc: [http://localhost:8080/redoc](http://localhost:8080/redoc)
 
 ---
 
-### 3. Terminal 2: Run the Frontend Server (React + Vite on Port 8192)
+### 3. Terminal 2: Run the Frontend Server (React + Vite on Port 80)
 
 1. Open a **second terminal** in the project root directory (`DEB`):
    ```bash
@@ -106,14 +110,15 @@ To run the complete system, you will need **two terminal windows**: one for the 
    npm install
    ```
 
-3. **Start the Frontend Server (Port 8192, Host 0.0.0.0)**:
+3. **Start the Frontend Server (Port 80, Host 0.0.0.0)**:
    ```bash
    npm run dev
    ```
 
 4. **Access the Portal**:
-   - **Local Browser**: **[http://localhost:8192](http://localhost:8192)**
-   - **Public IP Access**: **`http://180.235.121.253:8192`**
+   - **Local Browser**: **[http://localhost:80](http://localhost:80)** or **[http://localhost](http://localhost)**
+   - **Domain Access**: **`http://online.admission.saveetha.com`**
+   - **Public IP Access**: **`http://180.235.121.244`**
    - Login with your administrator credentials (`admin` / `admin123`).
 
 ## 🗄️ Database Schema & Structure

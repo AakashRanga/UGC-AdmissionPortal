@@ -38,31 +38,11 @@ export function Header({ activeTab, setActiveTab, mode, setMode, currentUser, on
             </button>
           </div>
 
-          {/* Mode Switcher */}
-          <div className="flex items-center bg-[#FDFBF7] p-1 rounded-full border border-amber-200/60 shadow-2xs">
-            <button
-              onClick={() => setMode('LOCAL')}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
-                mode === 'LOCAL'
-                  ? 'bg-amber-600 text-white shadow-xs font-bold'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-white'
-              }`}
-            >
-              <Cpu className="w-3.5 h-3.5" />
-              Local Test
-            </button>
-
-            <button
-              onClick={() => setMode('ONLINE')}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
-                mode === 'ONLINE'
-                  ? 'bg-emerald-600 text-white shadow-xs font-bold'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-white'
-              }`}
-            >
-              <ShieldCheck className="w-3.5 h-3.5" />
-              Online API
-            </button>
+          {/* Permanent Live Online API Status Badge */}
+          <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs font-bold shadow-2xs">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+            <span>UGC DEB Live API</span>
           </div>
 
           {/* Admin User Profile & Logout */}
